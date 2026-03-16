@@ -1,55 +1,58 @@
 """
 main.py
 Ponto de entrada da aplicação FastAPI.
-
-Para rodar em desenvolvimento:
-    uvicorn app.main:app --reload
-
-Para rodar em produção:
-    uvicorn app.main:app --host 0.0.0.0 --port 8000
 """
+
+import os
+import sys
+import logging
+
+# Log detalhado para ajudar no debug do Render
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(message)s",
+    stream=sys.stdout
+)
+log = logging.getLogger(__name__)
+
+log.info("=== Iniciando BarberFlow API ===")
+log.info(f"Python: {sys.version}")
+log.info(f"DATABASE_URL configurada: {'SIM' if os.getenv('DATABASE_URL') else 'NAO'}")
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.database.connection import engine, Base
-from app.models import models  # Importa para criar as tabelas
+log.info("Importando modulos internos...")
 
-# Importa todos os roteadores
+from app.database.connection import engine, Base
+from app.models import models
 from app.routers import auth, barbers, services, clients, appointments, dashboard
 
-# ─────────────────────────────────────────────
-# Cria as tabelas no banco (se não existirem)
-# Em produção, use Alembic para migrations!
-# ─────────────────────────────────────────────
-Base.metadata.create_all(bind=engine)
+log.info("Criando tabelas no banco de dados...")
+try:
+    Base.metadata.create_all(bind=engine)
+    log.info("Tabelas criadas com sucesso!")
+except Exception as e:
+    log.error(f"ERRO ao criar tabelas: {e}")
+    raise
 
-# ─────────────────────────────────────────────
 # Cria a aplicação FastAPI
-# ─────────────────────────────────────────────
 app = FastAPI(
     title="BarberFlow API",
     description="SaaS para gerenciamento de barbearias e salões de beleza",
     version="1.0.0",
-    docs_url="/docs",      # Swagger UI: http://localhost:8000/docs
-    redoc_url="/redoc",    # ReDoc: http://localhost:8000/redoc
+    docs_url="/docs",
+    redoc_url="/redoc",
 )
 
-# ─────────────────────────────────────────────
-# CORS - Permite que o frontend acesse a API
-# Em produção, troque "*" pelo domínio do seu frontend
-# ─────────────────────────────────────────────
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],       # Produção: ["https://seusite.vercel.app"]
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# ─────────────────────────────────────────────
-# Registra as rotas
-# ─────────────────────────────────────────────
 app.include_router(auth.router)
 app.include_router(barbers.router)
 app.include_router(services.router)
@@ -57,10 +60,11 @@ app.include_router(clients.router)
 app.include_router(appointments.router)
 app.include_router(dashboard.router)
 
+log.info("=== BarberFlow API pronta! ===")
+
 
 @app.get("/", tags=["Health Check"])
 def root():
-    """Health check - verifica se a API está online"""
     return {
         "status": "online",
         "app": "BarberFlow API",
@@ -71,5 +75,4 @@ def root():
 
 @app.get("/health", tags=["Health Check"])
 def health():
-    """Endpoint de saúde para monitoramento (Render, Railway, etc.)"""
     return {"status": "healthy"}
