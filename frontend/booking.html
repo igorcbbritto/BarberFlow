@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agendar Online</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root { --gold: #C9A84C; --dark: #0D0D0D; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--dark); color: #e5e5e5; }
+    .font-display { font-family: 'Bebas Neue', cursive; }
+    .gold { color: var(--gold); }
+
+    .input-field {
+      background: #1a1a1a; border: 1px solid #2a2a2a; color: #e5e5e5;
+      border-radius: 10px; padding: 11px 14px; font-size: 14px; width: 100%;
+      transition: border-color 0.2s; font-family: inherit;
+    }
+    .input-field:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,168,76,0.12); }
+    .input-field::placeholder { color: #444; }
+    select.input-field option { background: #1a1a1a; }
+
+    .card { background: #111; border: 1px solid #1e1e1e; border-radius: 16px; }
+
+    /* Cards de seleção (serviços, barbeiros) */
+    .select-card {
+      background: #161616; border: 2px solid #222; border-radius: 12px;
+      padding: 14px 16px; cursor: pointer; transition: all 0.2s;
+    }
+    .select-card:hover  { border-color: #444; }
+    .select-card.active { border-color: var(--gold); background: rgba(201,168,76,0.05); }
+
+    .btn-gold {
+      background: var(--gold); color: #0D0D0D; font-weight: 600;
+      border: none; cursor: pointer; transition: all 0.2s;
+      border-radius: 10px; padding: 13px 24px; font-size: 14px; width: 100%;
+      letter-spacing: 0.04em;
+    }
+    .btn-gold:hover { background: #E8C97A; transform: translateY(-1px); }
+    .btn-gold:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    .step-indicator { display: flex; align-items: center; gap: 8px; }
+    .step-dot {
+      width: 28px; height: 28px; border-radius: 50%; display: flex;
+      align-items: center; justify-content: center; font-size: 12px; font-weight: 600;
+    }
+    .step-dot.done    { background: rgba(201,168,76,0.2); color: var(--gold); }
+    .step-dot.active  { background: var(--gold); color: #0D0D0D; }
+    .step-dot.pending { background: #1e1e1e; color: #555; }
+    .step-line { flex: 1; height: 1px; background: #222; }
+
+    @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+    .fade-in { animation: fadeIn 0.3s ease; }
+  </style>
+</head>
+<body class="min-h-screen p-4 md:p-8">
+
+  <div class="max-w-xl mx-auto">
+
+    <!-- Header da barbearia -->
+    <div id="shop-header" class="text-center mb-8">
+      <div class="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
+           style="background:rgba(201,168,76,0.1);">
+        <svg width="32" height="32" viewBox="0 0 36 36" fill="none">
+          <path d="M10 10 L20 20 M26 10 L16 20 M14 22 a4 4 0 1 0 4 4 M22 22 a4 4 0 1 0 4 4"
+                stroke="#C9A84C" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <h1 id="shop-name" class="font-display text-4xl tracking-wider gold">Carregando...</h1>
+      <p id="shop-address" class="text-gray-500 text-sm mt-1 hidden"></p>
+    </div>
+
+    <!-- Indicador de passos -->
+    <div class="step-indicator mb-8 px-2">
+      <div class="step-dot active" id="step1-dot">1</div>
+      <div class="step-line"></div>
+      <div class="step-dot pending" id="step2-dot">2</div>
+      <div class="step-line"></div>
+      <div class="step-dot pending" id="step3-dot">3</div>
+      <div class="step-line"></div>
+      <div class="step-dot pending" id="step4-dot">4</div>
+    </div>
+
+    <!-- ── ETAPA 1: Escolher serviço ── -->
+    <div id="step1" class="fade-in">
+      <div class="card p-6 mb-4">
+        <h2 class="font-semibold text-white mb-1">Qual serviço você quer?</h2>
+        <p class="text-xs text-gray-500 mb-5">Passo 1 de 4</p>
+        <div id="services-list" class="space-y-3">
+          <div class="text-center py-8 text-gray-500 text-sm">Carregando serviços...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ETAPA 2: Escolher barbeiro ── -->
+    <div id="step2" class="hidden fade-in">
+      <div class="card p-6 mb-4">
+        <h2 class="font-semibold text-white mb-1">Com qual profissional?</h2>
+        <p class="text-xs text-gray-500 mb-5">Passo 2 de 4</p>
+        <div id="barbers-list" class="space-y-3"></div>
+      </div>
+      <button onclick="goToStep(1)" class="text-sm text-gray-500 hover:text-white transition-colors">← Voltar</button>
+    </div>
+
+    <!-- ── ETAPA 3: Escolher data e hora ── -->
+    <div id="step3" class="hidden fade-in">
+      <div class="card p-6 mb-4">
+        <h2 class="font-semibold text-white mb-1">Quando você quer vir?</h2>
+        <p class="text-xs text-gray-500 mb-5">Passo 3 de 4</p>
+        <div>
+          <label class="block text-xs text-gray-400 mb-2 uppercase tracking-wide">Data e Hora</label>
+          <input type="datetime-local" id="book-datetime" class="input-field"
+                 oninput="validateDateTime()" />
+          <p id="datetime-error" class="text-red-400 text-xs mt-2 hidden">Selecione uma data futura</p>
+        </div>
+        <button onclick="goToStep(4)" id="btn-step3-next"
+                class="btn-gold mt-5" disabled>
+          Continuar
+        </button>
+      </div>
+      <button onclick="goToStep(2)" class="text-sm text-gray-500 hover:text-white transition-colors">← Voltar</button>
+    </div>
+
+    <!-- ── ETAPA 4: Dados do cliente ── -->
+    <div id="step4" class="hidden fade-in">
+      <div class="card p-6 mb-4">
+        <h2 class="font-semibold text-white mb-1">Seus dados</h2>
+        <p class="text-xs text-gray-500 mb-5">Passo 4 de 4</p>
+
+        <!-- Resumo -->
+        <div class="p-4 rounded-xl mb-5 text-sm space-y-2" style="background:#1a1a1a;">
+          <div class="flex justify-between">
+            <span class="text-gray-400">Serviço</span>
+            <span class="text-white font-medium" id="summary-service">—</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-400">Profissional</span>
+            <span class="text-white" id="summary-barber">—</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-400">Data e hora</span>
+            <span class="text-white" id="summary-datetime">—</span>
+          </div>
+          <div class="flex justify-between pt-2 border-t" style="border-color:#2a2a2a;">
+            <span class="text-gray-400">Valor</span>
+            <span class="font-bold" style="color:#C9A84C;" id="summary-price">—</span>
+          </div>
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-xs text-gray-400 mb-1.5 uppercase tracking-wide">Seu Nome *</label>
+            <input type="text" id="client-name" required placeholder="Nome completo" class="input-field" />
+          </div>
+          <div>
+            <label class="block text-xs text-gray-400 mb-1.5 uppercase tracking-wide">Telefone *</label>
+            <input type="tel" id="client-phone" required placeholder="(11) 99999-9999" class="input-field" />
+          </div>
+          <div>
+            <label class="block text-xs text-gray-400 mb-1.5 uppercase tracking-wide">E-mail</label>
+            <input type="email" id="client-email" placeholder="Opcional" class="input-field" />
+          </div>
+          <button onclick="bookAppointment()" id="btn-book" class="btn-gold mt-2">
+            Confirmar Agendamento
+          </button>
+        </div>
+      </div>
+      <button onclick="goToStep(3)" class="text-sm text-gray-500 hover:text-white transition-colors">← Voltar</button>
+    </div>
+
+    <!-- ── SUCESSO ── -->
+    <div id="step-success" class="hidden fade-in text-center">
+      <div class="card p-10">
+        <div class="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"
+             style="background:rgba(52,211,153,0.1);">
+          <svg class="w-10 h-10" style="color:#34d399" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+          </svg>
+        </div>
+        <h2 class="font-display text-3xl tracking-wider mb-2" style="color:#34d399">AGENDADO!</h2>
+        <p class="text-gray-400 text-sm mb-6">Seu agendamento foi confirmado com sucesso.</p>
+        <div id="success-details" class="p-4 rounded-xl text-sm text-left space-y-2 mb-6"
+             style="background:#1a1a1a;"></div>
+        <button onclick="location.reload()" class="btn-gold">Fazer outro agendamento</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="js/api.js"></script>
+  <script>
+    let shopData = null;
+    let selected = { service: null, barber: null, datetime: null };
+
+    // Lê o slug da URL: booking.html?slug=joaobarber
+    const slug = new URLSearchParams(window.location.search).get('slug');
+
+    async function init() {
+      if (!slug) {
+        document.getElementById('shop-name').textContent = 'Link inválido';
+        return;
+      }
+      try {
+        shopData = await API.publicInfo(slug);
+        renderShopHeader();
+        renderServices();
+        renderBarbers();
+      } catch(e) {
+        document.getElementById('shop-name').textContent = 'Barbearia não encontrada';
+      }
+    }
+
+    function renderShopHeader() {
+      const s = shopData.barbershop;
+      document.getElementById('shop-name').textContent = s.name;
+      document.title = `Agendar — ${s.name}`;
+      if (s.address) {
+        const el = document.getElementById('shop-address');
+        el.textContent = s.address;
+        el.classList.remove('hidden');
+      }
+    }
+
+    function renderServices() {
+      const list = document.getElementById('services-list');
+      if (!shopData.services.length) {
+        list.innerHTML = '<p class="text-gray-500 text-sm text-center py-4">Nenhum serviço disponível</p>';
+        return;
+      }
+      list.innerHTML = shopData.services.map(s => `
+        <div class="select-card" onclick="selectService(${s.id})" id="service-${s.id}">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="font-medium text-white text-sm">${s.name}</p>
+              <p class="text-xs text-gray-500 mt-0.5">${s.duration} minutos</p>
+            </div>
+            <span class="font-bold text-sm" style="color:#C9A84C;">${formatCurrency(s.price)}</span>
+          </div>
+        </div>`).join('');
+    }
+
+    function renderBarbers() {
+      const list = document.getElementById('barbers-list');
+      if (!shopData.barbers.length) {
+        list.innerHTML = '<p class="text-gray-500 text-sm text-center py-4">Nenhum profissional disponível</p>';
+        return;
+      }
+      list.innerHTML = shopData.barbers.map(b => `
+        <div class="select-card" onclick="selectBarber(${b.id})" id="barber-${b.id}">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl flex items-center justify-center font-display text-lg"
+                 style="background:rgba(201,168,76,0.1); color:#C9A84C;">${b.name.charAt(0)}</div>
+            <div>
+              <p class="font-medium text-white text-sm">${b.name}</p>
+              ${b.specialty ? `<p class="text-xs text-gray-500">${b.specialty}</p>` : ''}
+            </div>
+          </div>
+        </div>`).join('');
+    }
+
+    function selectService(id) {
+      selected.service = shopData.services.find(s => s.id === id);
+      document.querySelectorAll('[id^="service-"]').forEach(el => el.classList.remove('active'));
+      document.getElementById(`service-${id}`).classList.add('active');
+      setTimeout(() => goToStep(2), 300);
+    }
+
+    function selectBarber(id) {
+      selected.barber = shopData.barbers.find(b => b.id === id);
+      document.querySelectorAll('[id^="barber-"]').forEach(el => el.classList.remove('active'));
+      document.getElementById(`barber-${id}`).classList.add('active');
+      setTimeout(() => goToStep(3), 300);
+    }
+
+    function validateDateTime() {
+      const val = document.getElementById('book-datetime').value;
+      const btn = document.getElementById('btn-step3-next');
+      const err = document.getElementById('datetime-error');
+      if (val && new Date(val) > new Date()) {
+        selected.datetime = val;
+        btn.disabled = false;
+        err.classList.add('hidden');
+      } else {
+        btn.disabled = true;
+        if (val) err.classList.remove('hidden');
+      }
+    }
+
+    function goToStep(step) {
+      [1,2,3,4].forEach(i => {
+        const el = document.getElementById(`step${i}`);
+        if (el) el.classList.add('hidden');
+        const dot = document.getElementById(`step${i}-dot`);
+        if (dot) dot.className = `step-dot ${i < step ? 'done' : i === step ? 'active' : 'pending'}`;
+      });
+      const target = step <= 4 ? document.getElementById(`step${step}`) : null;
+      if (target) { target.classList.remove('hidden'); }
+
+      if (step === 4) fillSummary();
+    }
+
+    function fillSummary() {
+      document.getElementById('summary-service').textContent  = selected.service?.name || '—';
+      document.getElementById('summary-barber').textContent   = selected.barber?.name || '—';
+      document.getElementById('summary-price').textContent    = formatCurrency(selected.service?.price || 0);
+      const dt = new Date(selected.datetime);
+      document.getElementById('summary-datetime').textContent =
+        dt.toLocaleDateString('pt-BR') + ' às ' + dt.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
+    }
+
+    async function bookAppointment() {
+      const name  = document.getElementById('client-name').value.trim();
+      const phone = document.getElementById('client-phone').value.trim();
+      const email = document.getElementById('client-email').value.trim();
+
+      if (!name || !phone) { showToast('Preencha nome e telefone', 'error'); return; }
+
+      const btn = document.getElementById('btn-book');
+      btn.textContent = 'Confirmando...'; btn.disabled = true;
+
+      try {
+        const result = await API.publicBook(slug, {
+          client_name:  name,
+          client_phone: phone,
+          client_email: email || null,
+          barber_id:    selected.barber.id,
+          service_id:   selected.service.id,
+          datetime:     new Date(selected.datetime).toISOString(),
+        });
+
+        // Mostra tela de sucesso
+        [1,2,3,4].forEach(i => {
+          const el = document.getElementById(`step${i}`);
+          if (el) el.classList.add('hidden');
+        });
+        document.getElementById('step-success').classList.remove('hidden');
+
+        const dt = new Date(result.datetime);
+        document.getElementById('success-details').innerHTML = `
+          <div class="flex justify-between"><span class="text-gray-400">Serviço</span><span class="text-white">${result.service}</span></div>
+          <div class="flex justify-between"><span class="text-gray-400">Profissional</span><span class="text-white">${result.barber}</span></div>
+          <div class="flex justify-between"><span class="text-gray-400">Data</span><span class="text-white">${dt.toLocaleDateString('pt-BR')}</span></div>
+          <div class="flex justify-between"><span class="text-gray-400">Hora</span><span class="text-white">${dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</span></div>`;
+      } catch(err) {
+        showToast(err.message, 'error');
+        btn.textContent = 'Confirmar Agendamento'; btn.disabled = false;
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

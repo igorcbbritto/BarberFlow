@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BarberFlow — Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+  <div id="app-layout"></div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/layout.js"></script>
+  <script>
+    initLayout('dashboard');
+    loadDashboard();
+
+    async function loadDashboard() {
+      const content = document.getElementById('page-content');
+      content.innerHTML = `<div class="flex items-center justify-center h-64 text-gray-500">Carregando...</div>`;
+
+      try {
+        const data = await API.dashboard();
+        renderDashboard(data);
+      } catch (err) {
+        content.innerHTML = `<div class="text-red-400 text-center py-20">${err.message}</div>`;
+      }
+    }
+
+    function renderDashboard(data) {
+      const content = document.getElementById('page-content');
+
+      const statusBadge = (s) => {
+        const map = {
+          confirmed: ['badge-confirmed', 'Confirmado'],
+          pending:   ['badge-pending',   'Pendente'],
+          completed: ['badge-completed', 'Concluído'],
+          cancelled: ['badge-cancelled', 'Cancelado'],
+        };
+        const [cls, label] = map[s] || ['badge-pending', s];
+        return `<span class="${cls} text-xs px-2 py-0.5 rounded-full font-medium">${label}</span>`;
+      };
+
+      const rows = data.today_appointments.length
+        ? data.today_appointments.map(a => `
+            <div class="table-row grid grid-cols-5 gap-4 px-5 py-3.5 text-sm items-center">
+              <div class="font-semibold text-white">${a.time}</div>
+              <div class="text-gray-300">${a.client_name}</div>
+              <div class="text-gray-400">${a.barber_name}</div>
+              <div class="text-gray-400">${a.service_name}</div>
+              <div class="flex items-center justify-between">
+                ${statusBadge(a.status)}
+                <span class="text-amber-400 text-xs font-medium">${formatCurrency(a.service_price)}</span>
+              </div>
+            </div>`).join('')
+        : `<div class="text-center py-14 text-gray-600">
+             <svg class="w-10 h-10 mx-auto mb-3 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                     d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+             </svg>
+             <p class="text-sm">Nenhum agendamento hoje</p>
+           </div>`;
+
+      content.innerHTML = `
+        <div class="fade-in">
+
+          <!-- Cabeçalho -->
+          <div class="flex items-center justify-between mb-8">
+            <div>
+              <h1 class="font-display text-4xl tracking-wider gold">DASHBOARD</h1>
+              <p class="text-gray-500 text-sm mt-1">${data.current_date} — Visão geral do dia</p>
+            </div>
+            <a href="agendamentos.html"
+               class="btn-gold text-sm px-5 py-2.5 flex items-center gap-2 no-underline">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+              </svg>
+              Novo Agendamento
+            </a>
+          </div>
+
+          <!-- Cards de métricas -->
+          <div class="grid grid-cols-3 gap-5 mb-8">
+
+            <!-- Card: Agendamentos Hoje -->
+            <div class="card p-6">
+              <div class="flex items-start justify-between">
+                <div>
+                  <p class="text-xs text-gray-500 uppercase tracking-widest mb-2">Agendamentos Hoje</p>
+                  <p class="text-5xl font-display tracking-wide gold">${data.today_appointments_count}</p>
+                </div>
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center"
+                     style="background:rgba(201,168,76,0.1);">
+                  <svg class="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card: Faturamento -->
+            <div class="card p-6">
+              <div class="flex items-start justify-between">
+                <div>
+                  <p class="text-xs text-gray-500 uppercase tracking-widest mb-2">Faturamento do Dia</p>
+                  <p class="text-4xl font-display tracking-wide" style="color:#34d399">${formatCurrency(data.today_revenue)}</p>
+                </div>
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center"
+                     style="background:rgba(52,211,153,0.1);">
+                  <svg class="w-5 h-5" style="color:#34d399" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card: Total Clientes -->
+            <div class="card p-6">
+              <div class="flex items-start justify-between">
+                <div>
+                  <p class="text-xs text-gray-500 uppercase tracking-widest mb-2">Total de Clientes</p>
+                  <p class="text-5xl font-display tracking-wide" style="color:#a5b4fc">${data.total_clients}</p>
+                </div>
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center"
+                     style="background:rgba(165,180,252,0.1);">
+                  <svg class="w-5 h-5" style="color:#a5b4fc" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Tabela de agendamentos do dia -->
+          <div class="card overflow-hidden">
+            <div class="flex items-center justify-between px-6 py-5 border-b" style="border-color:#1e1e1e;">
+              <h2 class="font-semibold text-white">Agenda de Hoje</h2>
+              <a href="agendamentos.html" class="text-xs text-amber-500 hover:text-amber-400">Ver todos →</a>
+            </div>
+
+            ${data.today_appointments.length ? `
+            <div class="grid grid-cols-5 gap-4 px-5 py-3 text-xs text-gray-500 uppercase tracking-wider border-b" style="border-color:#1a1a1a;">
+              <div>Horário</div><div>Cliente</div><div>Profissional</div><div>Serviço</div><div>Status</div>
+            </div>` : ''}
+            ${rows}
+          </div>
+
+        </div>`;
+    }
+  </script>
+</body>
+</html>

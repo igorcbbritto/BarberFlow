@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BarberFlow — Serviços</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+  <div id="app-layout"></div>
+
+  <div id="modal" class="modal-overlay hidden" onclick="closeModalOutside(event)">
+    <div class="modal-box">
+      <div class="flex items-center justify-between mb-6">
+        <h3 id="modal-title" class="text-lg font-semibold text-white">Novo Serviço</h3>
+        <button onclick="closeModal()" class="text-gray-500 hover:text-white">✕</button>
+      </div>
+      <form onsubmit="saveService(event)" class="space-y-4">
+        <input type="hidden" id="edit-id" />
+        <div>
+          <label class="block text-xs text-gray-400 mb-1.5 uppercase tracking-wide">Nome do Serviço *</label>
+          <input type="text" id="f-name" required placeholder="Ex: Corte Masculino" class="input-field" />
+        </div>
+        <div>
+          <label class="block text-xs text-gray-400 mb-1.5 uppercase tracking-wide">Descrição</label>
+          <textarea id="f-description" rows="2" placeholder="Opcional..." class="input-field resize-none"></textarea>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs text-gray-400 mb-1.5 uppercase tracking-wide">Duração (minutos) *</label>
+            <input type="number" id="f-duration" required min="5" placeholder="30" class="input-field" />
+          </div>
+          <div>
+            <label class="block text-xs text-gray-400 mb-1.5 uppercase tracking-wide">Preço (R$) *</label>
+            <input type="number" id="f-price" required min="0" step="0.01" placeholder="35.00" class="input-field" />
+          </div>
+        </div>
+        <div class="flex gap-3 pt-2">
+          <button type="submit" class="btn-gold flex-1 py-2.5">Salvar</button>
+          <button type="button" onclick="closeModal()" class="btn-ghost px-6">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/layout.js"></script>
+  <script>
+    initLayout('servicos');
+
+    function renderPage() {
+      document.getElementById('page-content').innerHTML = `
+        <div class="fade-in">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h1 class="font-display text-4xl tracking-wider gold">SERVIÇOS</h1>
+              <p class="text-gray-500 text-sm mt-1">Serviços e tabela de preços</p>
+            </div>
+            <button onclick="openModal()" class="btn-gold flex items-center gap-2 px-5 py-2.5">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+              </svg>
+              Novo Serviço
+            </button>
+          </div>
+          <div class="card overflow-hidden" id="services-table">
+            <div class="text-center py-14 text-gray-500 text-sm">Carregando...</div>
+          </div>
+        </div>`;
+      loadServices();
+    }
+
+    async function loadServices() {
+      const table = document.getElementById('services-table');
+      try {
+        const services = await API.getServices();
+        if (!services.length) {
+          table.innerHTML = `
+            <div class="text-center py-20 text-gray-600">
+              <svg class="w-12 h-12 mx-auto mb-4 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <circle cx="6" cy="6" r="3" stroke-width="1.5"/><circle cx="6" cy="18" r="3" stroke-width="1.5"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 4L8.12 15.88M14.47 14.48L20 20M8.12 8.12L12 12"/>
+              </svg>
+              <p class="text-sm mb-4">Nenhum serviço cadastrado</p>
+              <button onclick="openModal()" class="btn-gold text-xs px-5 py-2">Adicionar serviço</button>
+            </div>`;
+          return;
+        }
+
+        table.innerHTML = `
+          <div class="grid gap-4 px-5 py-3 text-xs text-gray-500 uppercase tracking-wider border-b"
+               style="grid-template-columns: 1fr 2fr 100px 100px 80px; border-color:#1a1a1a;">
+            <div>Serviço</div><div>Descrição</div><div>Duração</div><div>Preço</div><div>Ações</div>
+          </div>
+          ${services.map(s => `
+            <div class="table-row grid gap-4 px-5 py-4 items-center"
+                 style="grid-template-columns: 1fr 2fr 100px 100px 80px;">
+              <div class="font-medium text-white text-sm">${s.name}</div>
+              <div class="text-gray-500 text-sm truncate">${s.description || '—'}</div>
+              <div class="text-gray-300 text-sm">${s.duration} min</div>
+              <div class="font-semibold text-amber-400 text-sm">${formatCurrency(s.price)}</div>
+              <div class="flex gap-2">
+                <button onclick='editService(${JSON.stringify(s)})'
+                        class="text-gray-400 hover:text-white transition-colors" title="Editar">
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                  </svg>
+                </button>
+                <button onclick="deleteService(${s.id})"
+                        class="text-gray-500 hover:text-red-400 transition-colors" title="Desativar">
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                  </svg>
+                </button>
+              </div>
+            </div>`).join('')}`;
+      } catch(e) {
+        table.innerHTML = `<div class="text-center py-10 text-red-400">${e.message}</div>`;
+      }
+    }
+
+    function openModal(data = null) {
+      document.getElementById('modal-title').textContent = data ? 'Editar Serviço' : 'Novo Serviço';
+      document.getElementById('edit-id').value       = data?.id || '';
+      document.getElementById('f-name').value        = data?.name || '';
+      document.getElementById('f-description').value = data?.description || '';
+      document.getElementById('f-duration').value    = data?.duration || '';
+      document.getElementById('f-price').value       = data?.price || '';
+      document.getElementById('modal').classList.remove('hidden');
+    }
+
+    function editService(s) { openModal(s); }
+    function closeModal() { document.getElementById('modal').classList.add('hidden'); }
+    function closeModalOutside(e) { if (e.target.id === 'modal') closeModal(); }
+
+    async function saveService(e) {
+      e.preventDefault();
+      const id = document.getElementById('edit-id').value;
+      const body = {
+        name:        document.getElementById('f-name').value,
+        description: document.getElementById('f-description').value || null,
+        duration:    parseInt(document.getElementById('f-duration').value),
+        price:       parseFloat(document.getElementById('f-price').value),
+      };
+      try {
+        if (id) { await API.updateService(id, body); showToast('Serviço atualizado!'); }
+        else    { await API.createService(body);     showToast('Serviço cadastrado!'); }
+        closeModal();
+        loadServices();
+      } catch(err) { showToast(err.message, 'error'); }
+    }
+
+    async function deleteService(id) {
+      if (!confirm('Desativar este serviço?')) return;
+      try {
+        await API.deleteService(id);
+        showToast('Serviço desativado', 'info');
+        loadServices();
+      } catch(err) { showToast(err.message, 'error'); }
+    }
+
+    renderPage();
+  </script>
+</body>
+</html>

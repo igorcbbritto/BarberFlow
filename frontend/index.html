@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BarberFlow — Login</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --gold: #C9A84C;
+      --gold-light: #E8C97A;
+      --dark: #0D0D0D;
+      --dark-2: #141414;
+      --dark-3: #1C1C1C;
+      --dark-4: #252525;
+    }
+    body { font-family: 'DM Sans', sans-serif; background: var(--dark); color: #e5e5e5; }
+    .font-display { font-family: 'Bebas Neue', cursive; }
+    .gold { color: var(--gold); }
+    .bg-gold { background: var(--gold); }
+
+    /* Fundo animado */
+    .bg-pattern {
+      background-image: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 40px,
+        rgba(201,168,76,0.03) 40px,
+        rgba(201,168,76,0.03) 80px
+      );
+    }
+
+    /* Linha dourada nos inputs ao focar */
+    .input-field {
+      background: var(--dark-4);
+      border: 1px solid #333;
+      color: #e5e5e5;
+      transition: border-color 0.2s;
+    }
+    .input-field:focus {
+      outline: none;
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(201,168,76,0.15);
+    }
+    .input-field::placeholder { color: #555; }
+
+    .btn-gold {
+      background: var(--gold);
+      color: #0D0D0D;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      transition: all 0.2s;
+    }
+    .btn-gold:hover { background: var(--gold-light); transform: translateY(-1px); }
+    .btn-gold:active { transform: translateY(0); }
+
+    .tab-active {
+      color: var(--gold);
+      border-bottom: 2px solid var(--gold);
+    }
+    .tab-inactive {
+      color: #666;
+      border-bottom: 2px solid transparent;
+    }
+
+    /* Animação de fade no painel */
+    .panel { animation: fadeUp 0.4s ease; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Divisor com texto */
+    .divider {
+      display: flex; align-items: center; gap: 12px; color: #444;
+    }
+    .divider::before, .divider::after {
+      content: ''; flex: 1; height: 1px; background: #2a2a2a;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-pattern flex items-center justify-center p-4">
+
+  <!-- Fundo decorativo -->
+  <div class="fixed inset-0 pointer-events-none overflow-hidden">
+    <div class="absolute -top-40 -left-40 w-96 h-96 rounded-full opacity-5"
+         style="background: radial-gradient(circle, #C9A84C, transparent)"></div>
+    <div class="absolute -bottom-40 -right-40 w-96 h-96 rounded-full opacity-5"
+         style="background: radial-gradient(circle, #C9A84C, transparent)"></div>
+  </div>
+
+  <div class="w-full max-w-md relative z-10">
+
+    <!-- Logo -->
+    <div class="text-center mb-8">
+      <div class="inline-flex items-center gap-3 mb-2">
+        <!-- Ícone de tesoura estilizado em SVG -->
+        <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+          <circle cx="18" cy="18" r="18" fill="#C9A84C" opacity="0.15"/>
+          <path d="M10 10 L20 20 M26 10 L16 20 M14 22 a4 4 0 1 0 4 4 M22 22 a4 4 0 1 0 4 4"
+                stroke="#C9A84C" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+        <h1 class="font-display text-5xl tracking-widest gold">BARBERFLOW</h1>
+      </div>
+      <p class="text-sm text-gray-500 tracking-widest uppercase">Sistema de Gestão para Barbearias</p>
+    </div>
+
+    <!-- Card principal -->
+    <div class="panel rounded-2xl overflow-hidden shadow-2xl" style="background: var(--dark-2); border: 1px solid #222;">
+
+      <!-- Tabs Login / Cadastro -->
+      <div class="flex border-b" style="border-color: #222;">
+        <button id="tab-login"
+                onclick="switchTab('login')"
+                class="flex-1 py-4 text-sm font-medium tracking-wide tab-active transition-all">
+          Entrar
+        </button>
+        <button id="tab-register"
+                onclick="switchTab('register')"
+                class="flex-1 py-4 text-sm font-medium tracking-wide tab-inactive transition-all">
+          Criar Conta
+        </button>
+      </div>
+
+      <div class="p-8">
+
+        <!-- ── FORMULÁRIO DE LOGIN ── -->
+        <form id="form-login" onsubmit="handleLogin(event)" class="space-y-4">
+          <div>
+            <label class="block text-xs text-gray-400 mb-1.5 tracking-wide uppercase">E-mail</label>
+            <input type="email" id="login-email" required
+                   placeholder="seu@email.com"
+                   class="input-field w-full px-4 py-3 rounded-lg text-sm" />
+          </div>
+          <div>
+            <label class="block text-xs text-gray-400 mb-1.5 tracking-wide uppercase">Senha</label>
+            <input type="password" id="login-password" required
+                   placeholder="••••••••"
+                   class="input-field w-full px-4 py-3 rounded-lg text-sm" />
+          </div>
+          <button type="submit" id="btn-login"
+                  class="btn-gold w-full py-3 rounded-lg text-sm uppercase tracking-widest mt-2">
+            Entrar
+          </button>
+
+          <div class="divider text-xs">Demo</div>
+
+          <button type="button"
+                  onclick="fillDemo()"
+                  class="w-full py-2.5 rounded-lg text-xs text-gray-400 border border-dashed tracking-wide"
+                  style="border-color: #333;">
+            Preencher com dados de demonstração
+          </button>
+        </form>
+
+        <!-- ── FORMULÁRIO DE CADASTRO ── -->
+        <form id="form-register" onsubmit="handleRegister(event)" class="space-y-4 hidden">
+
+          <div class="p-3 rounded-lg text-xs text-amber-400 mb-2"
+               style="background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.2);">
+            ✦ Crie sua conta e comece a usar gratuitamente
+          </div>
+
+          <div>
+            <label class="block text-xs text-gray-400 mb-1.5 tracking-wide uppercase">Nome da Barbearia</label>
+            <input type="text" id="reg-barbershop" required
+                   placeholder="Ex: Barbearia do João"
+                   class="input-field w-full px-4 py-3 rounded-lg text-sm" />
+          </div>
+
+          <div>
+            <label class="block text-xs text-gray-400 mb-1.5 tracking-wide uppercase">
+              Endereço do Link
+              <span class="text-gray-600 normal-case ml-1">(apenas letras e hífens)</span>
+            </label>
+            <div class="flex items-center gap-0">
+              <span class="px-3 py-3 text-xs rounded-l-lg text-gray-500"
+                    style="background: #1a1a1a; border: 1px solid #333; border-right: none;">
+                barberflow.com/
+              </span>
+              <input type="text" id="reg-slug" required
+                     placeholder="joaobarber"
+                     class="input-field flex-1 px-4 py-3 rounded-r-lg text-sm"
+                     oninput="this.value = this.value.toLowerCase().replace(/[^a-z0-9-]/g, '')" />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs text-gray-400 mb-1.5 tracking-wide uppercase">Seu Nome</label>
+            <input type="text" id="reg-name" required
+                   placeholder="João Silva"
+                   class="input-field w-full px-4 py-3 rounded-lg text-sm" />
+          </div>
+
+          <div>
+            <label class="block text-xs text-gray-400 mb-1.5 tracking-wide uppercase">E-mail</label>
+            <input type="email" id="reg-email" required
+                   placeholder="seu@email.com"
+                   class="input-field w-full px-4 py-3 rounded-lg text-sm" />
+          </div>
+
+          <div>
+            <label class="block text-xs text-gray-400 mb-1.5 tracking-wide uppercase">Senha</label>
+            <input type="password" id="reg-password" required
+                   placeholder="Mínimo 6 caracteres"
+                   class="input-field w-full px-4 py-3 rounded-lg text-sm" />
+          </div>
+
+          <button type="submit" id="btn-register"
+                  class="btn-gold w-full py-3 rounded-lg text-sm uppercase tracking-widest mt-2">
+            Criar Conta Grátis
+          </button>
+        </form>
+
+      </div>
+    </div>
+
+    <p class="text-center text-xs text-gray-600 mt-6">
+      BarberFlow © 2024 — Gestão inteligente para barbearias
+    </p>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script>
+    // Redireciona se já estiver logado
+    if (Auth.isLoggedIn()) window.location.href = 'pages/dashboard.html';
+
+    function switchTab(tab) {
+      const isLogin = tab === 'login';
+      document.getElementById('form-login').classList.toggle('hidden', !isLogin);
+      document.getElementById('form-register').classList.toggle('hidden', isLogin);
+      document.getElementById('tab-login').className    = `flex-1 py-4 text-sm font-medium tracking-wide transition-all ${isLogin ? 'tab-active' : 'tab-inactive'}`;
+      document.getElementById('tab-register').className = `flex-1 py-4 text-sm font-medium tracking-wide transition-all ${!isLogin ? 'tab-active' : 'tab-inactive'}`;
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btn-login');
+      btn.textContent = 'Entrando...'; btn.disabled = true;
+      try {
+        const data = await API.login({
+          email:    document.getElementById('login-email').value,
+          password: document.getElementById('login-password').value,
+        });
+        Auth.save(data);
+        window.location.href = 'pages/dashboard.html';
+      } catch (err) {
+        showToast(err.message, 'error');
+      } finally {
+        btn.textContent = 'Entrar'; btn.disabled = false;
+      }
+    }
+
+    async function handleRegister(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btn-register');
+      btn.textContent = 'Criando conta...'; btn.disabled = true;
+      try {
+        const data = await API.register({
+          barbershop_name: document.getElementById('reg-barbershop').value,
+          barbershop_slug: document.getElementById('reg-slug').value,
+          user_name:       document.getElementById('reg-name').value,
+          email:           document.getElementById('reg-email').value,
+          password:        document.getElementById('reg-password').value,
+        });
+        Auth.save(data);
+        window.location.href = 'pages/dashboard.html';
+      } catch (err) {
+        showToast(err.message, 'error');
+      } finally {
+        btn.textContent = 'Criar Conta Grátis'; btn.disabled = false;
+      }
+    }
+
+    function fillDemo() {
+      document.getElementById('login-email').value    = 'demo@barberflow.com';
+      document.getElementById('login-password').value = 'demo123';
+    }
+  </script>
+</body>
+</html>
