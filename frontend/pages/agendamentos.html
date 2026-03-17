@@ -268,6 +268,11 @@
       const id = document.getElementById('edit-id').value;
       const dtValue = document.getElementById('f-datetime').value;
 
+      if (!dtValue) {
+        showToast('Selecione a data e hora', 'error');
+        return;
+      }
+
       // O input datetime-local já está no horário local — o Date() converte para UTC automaticamente
       const body = {
         client_id:  parseInt(document.getElementById('f-client').value),
@@ -275,8 +280,12 @@
         service_id: parseInt(document.getElementById('f-service').value),
         datetime:   new Date(dtValue).toISOString(),
         notes:      document.getElementById('f-notes').value || null,
-        status:     document.getElementById('f-status').value,
       };
+
+      // Status só é enviado na edição (update), não na criação
+      if (id) {
+        body.status = document.getElementById('f-status').value;
+      }
 
       try {
         if (id) { await API.updateAppointment(id, body); showToast('Agendamento atualizado!'); }
