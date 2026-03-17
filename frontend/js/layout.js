@@ -263,6 +263,7 @@ function scissorsIcon() {
     .btn-ghost:hover { border-color: #444; color: #ccc; }
 
     /* ── BADGES ── */
+    .badge-scheduled { background: rgba(99,179,237,0.15);  color: #63b3ed; border: 1px solid rgba(99,179,237,0.2); }
     .badge-confirmed { background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.2); }
     .badge-pending   { background: rgba(245,158,11,0.15);  color: #fbbf24; border: 1px solid rgba(245,158,11,0.2); }
     .badge-completed { background: rgba(99,102,241,0.15);  color: #a5b4fc; border: 1px solid rgba(99,102,241,0.2); }
