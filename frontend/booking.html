@@ -456,6 +456,7 @@
           service_id: selected.service.id,
           date:       iso,
           slug:       slug,
+          tz_offset:  new Date().getTimezoneOffset(), // envia offset real do browser
         });
 
         if (!result.slots || !result.slots.length) {
@@ -550,9 +551,10 @@
       btn.disabled = true;
 
       try {
-        // Converte horário local para UTC para enviar à API
+        // O datetime_local já está no fuso do usuário
+        // new Date() interpreta como horário LOCAL e converte para UTC automaticamente
         const localDt  = new Date(selected.slot.datetimeLocal);
-        const isoUtc   = new Date(localDt.getTime() + 3 * 60 * 60 * 1000).toISOString();
+        const isoUtc   = localDt.toISOString(); // JavaScript já converte local→UTC
 
         await API.publicBook(slug, {
           client_name:  name,
