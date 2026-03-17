@@ -75,12 +75,20 @@
     initLayout('agendamentos');
 
     let allClients = [], allBarbers = [], allServices = [];
-    let selectedDate = todayISO();
+    // Usa a data local do browser (não UTC) para o filtro
+    function localTodayISO() {
+      const now = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      return now.getFullYear() + '-' + pad(now.getMonth()+1) + '-' + pad(now.getDate());
+    }
+
+    let selectedDate = localTodayISO();
 
     // Converte datetime UTC do servidor para input datetime-local (horário local do browser)
     function utcToLocal(isoString) {
-      const dt = new Date(isoString + (isoString.endsWith('Z') ? '' : 'Z'));
-      // Formata no fuso local do usuário para o input datetime-local
+      // Adiciona 'Z' para garantir que o browser interprete como UTC
+      const utcString = isoString.endsWith('Z') ? isoString : isoString + 'Z';
+      const dt = new Date(utcString);
       const pad = n => String(n).padStart(2, '0');
       return dt.getFullYear() + '-' +
              pad(dt.getMonth() + 1) + '-' +
@@ -89,15 +97,11 @@
              pad(dt.getMinutes());
     }
 
-    // Converte o valor do input datetime-local para ISO UTC para enviar à API
-    function localToUTC(dtLocalValue) {
-      // O new Date() interpreta o valor como local e converte para UTC automaticamente
-      return new Date(dtLocalValue).toISOString();
-    }
-
     // Formata para exibição na tabela usando horário local do browser
+    // O servidor salva em UTC sem 'Z', então adicionamos para o browser converter corretamente
     function formatLocalTime(isoString) {
-      const dt = new Date(isoString);
+      const utcString = isoString.endsWith('Z') ? isoString : isoString + 'Z';
+      const dt = new Date(utcString);
       return {
         time: dt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
         date: dt.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
@@ -156,7 +160,7 @@
             <label class="text-xs text-gray-400 uppercase tracking-wide whitespace-nowrap">Filtrar por data:</label>
             <input type="date" id="date-picker" value="${selectedDate}"
                    onchange="changeDate(this.value)" class="input-field" style="width:auto;" />
-            <button onclick="changeDate(todayISO())" class="btn-ghost text-xs px-3 py-2">Hoje</button>
+            <button onclick="changeDate(localTodayISO())" class="btn-ghost text-xs px-3 py-2">Hoje</button>
             <button onclick="changeDate('')"          class="btn-ghost text-xs px-3 py-2">Todos</button>
           </div>
 
