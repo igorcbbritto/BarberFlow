@@ -269,3 +269,139 @@ class PublicAppointmentCreate(BaseModel):
     barber_id: int
     service_id: int
     datetime: datetime
+
+
+# ═══════════════════════════════════════════
+# BARBER SCHEDULE SCHEMAS (Horários de trabalho)
+# ═══════════════════════════════════════════
+
+class BarberScheduleCreate(BaseModel):
+    """Define horário de trabalho de um profissional em um dia da semana"""
+    barber_id:   int
+    day_of_week: int    # 0=Segunda ... 6=Domingo
+    start_time:  str    # "08:00"
+    end_time:    str    # "18:00"
+
+    @field_validator("day_of_week")
+    @classmethod
+    def valid_day(cls, v):
+        if not 0 <= v <= 6:
+            raise ValueError("Dia deve ser entre 0 (Segunda) e 6 (Domingo)")
+        return v
+
+    @field_validator("start_time", "end_time")
+    @classmethod
+    def valid_time(cls, v):
+        import re
+        if not re.match(r"^\d{2}:\d{2}$", v):
+            raise ValueError("Hora deve estar no formato HH:MM")
+        return v
+
+
+class BarberScheduleResponse(BaseModel):
+    id:           int
+    barber_id:    int
+    day_of_week:  int
+    start_time:   str
+    end_time:     str
+    is_active:    bool
+
+    class Config:
+        from_attributes = True
+
+
+class AvailableSlot(BaseModel):
+    """Horário disponível para agendamento"""
+    time:     str   # "09:00"
+    datetime: str   # ISO string para enviar ao backend
+
+
+# ═══════════════════════════════════════════
+# BARBER SCHEDULE SCHEMAS
+# ═══════════════════════════════════════════
+
+class BarberScheduleCreate(BaseModel):
+    """Cria ou atualiza horário de um dia da semana"""
+    day_of_week: int   # 0=Segunda ... 6=Domingo
+    start_time: str    # "08:00"
+    end_time: str      # "18:00"
+    is_active: bool = True
+
+class BarberScheduleResponse(BaseModel):
+    id: int
+    barber_id: int
+    day_of_week: int
+    start_time: str
+    end_time: str
+    is_active: bool
+
+    class Config:
+        from_attributes = True
+
+
+# ═══════════════════════════════════════════
+# BARBER SCHEDULE SCHEMAS (Horários de trabalho)
+# ═══════════════════════════════════════════
+
+class ScheduleCreate(BaseModel):
+    """Horário de trabalho de um dia da semana"""
+    weekday:    int    # 0=Seg, 1=Ter... 6=Dom
+    start_time: str    # "08:00"
+    end_time:   str    # "18:00"
+
+    @field_validator("weekday")
+    @classmethod
+    def valid_weekday(cls, v):
+        if not 0 <= v <= 6:
+            raise ValueError("Dia da semana deve ser entre 0 (Seg) e 6 (Dom)")
+        return v
+
+
+class ScheduleResponse(BaseModel):
+    id:         int
+    barber_id:  int
+    weekday:    int
+    start_time: str
+    end_time:   str
+    is_active:  bool
+
+    class Config:
+        from_attributes = True
+
+
+# ═══════════════════════════════════════════
+# BARBER SCHEDULE SCHEMAS (Agenda dos profissionais)
+# ═══════════════════════════════════════════
+
+class BarberScheduleCreate(BaseModel):
+    """Horário de trabalho para um dia da semana"""
+    day_of_week: int   # 0=Seg, 1=Ter, 2=Qua, 3=Qui, 4=Sex, 5=Sab, 6=Dom
+    start_time: str    # "08:00"
+    end_time: str      # "18:00"
+
+    @field_validator("day_of_week")
+    @classmethod
+    def valid_day(cls, v):
+        if v not in range(7):
+            raise ValueError("Dia da semana deve ser entre 0 (Segunda) e 6 (Domingo)")
+        return v
+
+    @field_validator("start_time", "end_time")
+    @classmethod
+    def valid_time(cls, v):
+        import re
+        if not re.match(r"^\d{2}:\d{2}$", v):
+            raise ValueError("Horário deve estar no formato HH:MM")
+        return v
+
+
+class BarberScheduleResponse(BaseModel):
+    id: int
+    barber_id: int
+    day_of_week: int
+    start_time: str
+    end_time: str
+    is_active: bool
+
+    class Config:
+        from_attributes = True
