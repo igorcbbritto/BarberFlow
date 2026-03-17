@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session, joinedload
 
 from app.database.connection import get_db
-from app.models.models import Appointment, AppointmentStatus, Client, Barber, Service, Barbershop, User
+from app.models.models import Appointment, AppointmentStatus, PaymentStatus, Client, Barber, Service, Barbershop, User
 from app.schemas.schemas import AppointmentCreate, AppointmentUpdate, AppointmentResponse, PublicAppointmentCreate
 from app.auth.auth import get_current_user
 
@@ -114,7 +114,7 @@ def create_appointment(
         datetime=dt,
         notes=data.notes,
         barbershop_id=current_user.barbershop_id,
-        status=AppointmentStatus.confirmed
+        status=AppointmentStatus.scheduled
     )
     db.add(appointment)
     db.commit()
@@ -192,22 +192,52 @@ def update_appointment(
 
 
 @router.delete("/{appointment_id}", status_code=204)
-def cancel_appointment(
+def delete_appointment(
     appointment_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Cancela um agendamento (muda status para cancelled)"""
+    """Cancela (se ativo) ou exclui definitivamente (se já cancelado)"""
     appointment = db.query(Appointment).filter(
         Appointment.id == appointment_id,
         Appointment.barbershop_id == current_user.barbershop_id
     ).first()
-    
+
     if not appointment:
         raise HTTPException(status_code=404, detail="Agendamento não encontrado")
-    
-    appointment.status = AppointmentStatus.cancelled
+
+    if appointment.status == AppointmentStatus.cancelled:
+        db.delete(appointment)
+    else:
+        appointment.status = AppointmentStatus.cancelled
     db.commit()
+
+
+@router.patch("/{appointment_id}/payment", response_model=dict)
+def toggle_payment(
+    appointment_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Alterna status de pagamento entre pago e não pago"""
+    appointment = db.query(Appointment).options(
+        joinedload(Appointment.client),
+        joinedload(Appointment.barber),
+        joinedload(Appointment.service),
+    ).filter(
+        Appointment.id == appointment_id,
+        Appointment.barbershop_id == current_user.barbershop_id
+    ).first()
+
+    if not appointment:
+        raise HTTPException(status_code=404, detail="Agendamento não encontrado")
+
+    appointment.payment_status = (
+        PaymentStatus.unpaid if appointment.payment_status == PaymentStatus.paid
+        else PaymentStatus.paid
+    )
+    db.commit()
+    return _format_appointment(appointment)
 
 
 # ─────────────────────────────────────────────
@@ -333,7 +363,7 @@ def public_book_appointment(
         service_id=data.service_id,
         datetime=dt_public,
         barbershop_id=barbershop.id,
-        status=AppointmentStatus.confirmed
+        status=AppointmentStatus.scheduled
     )
     db.add(appointment)
     db.commit()
@@ -482,6 +512,7 @@ def _format_appointment(a: Appointment) -> dict:
         "id": a.id,
         "datetime": a.datetime.isoformat(),
         "status": a.status.value,
+        "payment_status": a.payment_status.value if a.payment_status else "unpaid",
         "notes": a.notes,
         "barbershop_id": a.barbershop_id,
         "created_at": a.created_at.isoformat(),
