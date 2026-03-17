@@ -19,34 +19,35 @@ router = APIRouter(prefix="/appointments", tags=["Agendamentos"])
 @router.get("/", response_model=List[dict])
 def list_appointments(
     date_filter: Optional[str] = Query(None, description="Filtrar por data: YYYY-MM-DD"),
+    tz_offset: Optional[int] = Query(None, description="Offset do fuso em minutos"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Lista agendamentos da barbearia.
-    Aceita filtro por data: GET /appointments?date_filter=2024-01-15
-    """
+    from datetime import timedelta
     query = db.query(Appointment).options(
-        joinedload(Appointment.client),   # JOIN automático para pegar dados do cliente
-        joinedload(Appointment.barber),   # JOIN do barbeiro
-        joinedload(Appointment.service),  # JOIN do serviço
+        joinedload(Appointment.client),
+        joinedload(Appointment.barber),
+        joinedload(Appointment.service),
     ).filter(
         Appointment.barbershop_id == current_user.barbershop_id
     )
-    
+
     if date_filter:
         try:
             filter_date = datetime.strptime(date_filter, "%Y-%m-%d").date()
+            # tz_offset é positivo quando atrás de UTC (ex: Brasília = 180 min)
+            # Somamos ao UTC para achar o início/fim do dia local no banco
+            offset_delta = timedelta(minutes=tz_offset if tz_offset is not None else 0)
+            day_start = datetime.combine(filter_date, datetime.min.time()) + offset_delta
+            day_end   = datetime.combine(filter_date, datetime.max.time()) + offset_delta
             query = query.filter(
-                Appointment.datetime >= datetime.combine(filter_date, datetime.min.time()),
-                Appointment.datetime <  datetime.combine(filter_date, datetime.max.time()),
+                Appointment.datetime >= day_start,
+                Appointment.datetime <= day_end,
             )
         except ValueError:
             raise HTTPException(status_code=400, detail="Formato de data inválido. Use YYYY-MM-DD")
-    
+
     appointments = query.order_by(Appointment.datetime).all()
-    
-    # Monta resposta com dados relacionados
     return [_format_appointment(a) for a in appointments]
 
 
