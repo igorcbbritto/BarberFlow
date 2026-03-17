@@ -171,7 +171,7 @@
               Entre em contato para contratar seu acesso.
             </p>
 
-            <a href="https://wa.me/5521999798554?text=Olá!%20Quero%20contratar%20o%20BarberFlow%20para%20minha%20barbearia."
+            <a href="https://wa.me/5521999999999?text=Olá!%20Quero%20contratar%20o%20BarberFlow%20para%20minha%20barbearia."
                target="_blank"
                class="btn-gold w-full py-3 rounded-lg text-sm uppercase tracking-widest flex items-center justify-center gap-2 no-underline mb-3"
                style="text-decoration:none;">
@@ -200,7 +200,9 @@
   <script src="js/api.js"></script>
   <script>
     // Redireciona se já estiver logado
-    if (Auth.isLoggedIn()) window.location.href = 'pages/dashboard.html';
+    if (Auth.isLoggedIn()) {
+      window.location.href = Auth.isAdmin() ? 'admin.html' : 'pages/dashboard.html';
+    }
 
     function switchTab(tab) {
       const isLogin = tab === 'login';
@@ -220,7 +222,7 @@
           password: document.getElementById('login-password').value,
         });
         Auth.save(data);
-        window.location.href = 'pages/dashboard.html';
+        window.location.href = data.is_admin ? 'admin.html' : 'pages/dashboard.html';
       } catch (err) {
         showToast(err.message, 'error');
       } finally {
