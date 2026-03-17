@@ -170,9 +170,9 @@
     }
 
     function renderMetrics(shops) {
-      const active   = shops.filter(s => s.is_active && s.days_left > 0).length;
-      const expiring = shops.filter(s => s.is_active && s.days_left <= 7 && s.days_left > 0).length;
-      const expired  = shops.filter(s => s.days_left === 0 || !s.is_active).length;
+      const active   = shops.filter(s => s.is_active && (s.days_left === null || s.days_left > 0)).length;
+      const expiring = shops.filter(s => s.is_active && s.days_left !== null && s.days_left <= 7 && s.days_left > 0).length;
+      const expired  = shops.filter(s => !s.is_active || (s.days_left !== null && s.days_left === 0)).length;
       document.getElementById('metrics').innerHTML = `
         <div style="background:#111;border:1px solid #1e1e1e;border-radius:12px;padding:16px;">
           <p style="font-size:11px;color:#555;text-transform:uppercase;letter-spacing:0.05em;margin:0 0 6px;">Ativos</p>
@@ -221,7 +221,7 @@
                 </div>
               </div>
               <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-                <button onclick="openDaysModal(${s.id}, '${s.name.replace(/'/g,"\\'")}'))" class="btn-ghost" style="font-size:12px;">+Dias</button>
+                <button onclick="openDaysModal(${s.id}, '${s.name.replace(/'/g,"\\'")}' )" class="btn-ghost" style="font-size:12px;">+Dias</button>
                 <button onclick="toggleActive(${s.id}, ${s.is_active})" class="btn-ghost" style="font-size:12px;">${s.is_active ? 'Suspender' : 'Reativar'}</button>
               </div>
             </div>
