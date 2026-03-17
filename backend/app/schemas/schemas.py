@@ -202,9 +202,11 @@ class AppointmentUpdate(BaseModel):
     client_id: Optional[int] = None
     barber_id: Optional[int] = None
     service_id: Optional[int] = None
-    datetime: Optional[datetime] = None
+    appointment_datetime: Optional[datetime] = None
     status: Optional[AppointmentStatus] = None
     notes: Optional[str] = None
+
+    model_config = {"populate_by_name": True}
 
 
 class AppointmentResponse(BaseModel):
