@@ -90,6 +90,22 @@ def create_appointment(
     if hasattr(dt, 'tzinfo') and dt.tzinfo is not None:
         dt = dt.astimezone(tz.utc).replace(tzinfo=None)
 
+    # Valida conflito de horário para o mesmo profissional
+    from datetime import timedelta
+    conflito = db.query(Appointment).filter(
+        Appointment.barber_id == data.barber_id,
+        Appointment.barbershop_id == current_user.barbershop_id,
+        Appointment.status.notin_([AppointmentStatus.cancelled]),
+        Appointment.datetime >= dt - timedelta(minutes=59),
+        Appointment.datetime <= dt + timedelta(minutes=59),
+    ).first()
+
+    if conflito:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Profissional já tem agendamento próximo a este horário ({conflito.datetime.strftime('%H:%M')}). Escolha outro horário."
+        )
+
     appointment = Appointment(
         client_id=data.client_id,
         barber_id=data.barber_id,
