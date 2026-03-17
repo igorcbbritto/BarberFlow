@@ -114,13 +114,17 @@ def seed_demo_data():
         db.flush()
 
         # Agendamentos — UTC-3 Brasília
-        now_utc   = datetime.now(timezone.utc).replace(tzinfo=None)
-        today_utc = now_utc.replace(hour=0, minute=0, second=0, microsecond=0)
-        offset    = timedelta(hours=3)
+        now_utc      = datetime.now(timezone.utc).replace(tzinfo=None)
+        offset       = timedelta(hours=3)
+        # "Hoje" no horário de Brasília (UTC-3)
+        now_brasilia = now_utc - offset
+        today_local  = now_brasilia.replace(hour=0, minute=0, second=0, microsecond=0)
 
         def dt(day_delta, hour, minute):
-            local = today_utc + timedelta(days=day_delta, hours=hour, minutes=minute)
-            return local + offset
+            # Parte do início do dia LOCAL (Brasília) e converte para UTC
+            # Ex: dia 0, 09:00 Brasília → 09:00 + 3h = 12:00 UTC
+            local_dt = today_local + timedelta(days=day_delta, hours=hour, minutes=minute)
+            return local_dt + offset
 
         appts = [
             # Ontem — concluídos
