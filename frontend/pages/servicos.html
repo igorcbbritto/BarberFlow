@@ -123,13 +123,13 @@
       document.getElementById('f-description').value = data ? (data.description || '') : '';
       document.getElementById('f-duration').value    = data ? data.duration : '';
       document.getElementById('f-price').value       = data ? data.price : '';
-      document.getElementById('modal').classList.remove('hidden');
+      document.getElementById('modal').classList.add('show');
     }
 
     function editService(s) { openModal(s); }
 
     function closeModal() {
-      document.getElementById('modal').classList.add('hidden');
+      document.getElementById('modal').classList.remove('show');
       document.getElementById('modal-form').reset();
       document.getElementById('edit-id').value = '';
     }
