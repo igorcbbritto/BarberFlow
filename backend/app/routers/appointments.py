@@ -329,26 +329,27 @@ def public_book_appointment(
 # ─────────────────────────────────────────────
 
 def _format_appointment(a: Appointment) -> dict:
+    """Converte objeto Appointment em dict com todos os dados"""
     return {
         "id": a.id,
-        "datetime": a.datetime.isoformat() + "Z" if a.datetime else None,
+        "datetime": a.datetime.isoformat(),
         "status": a.status.value,
         "notes": a.notes,
         "barbershop_id": a.barbershop_id,
-        "created_at": a.created_at.isoformat() + "Z" if a.created_at else None,
+        "created_at": a.created_at.isoformat(),
         "client": {
             "id": a.client.id,
             "name": a.client.name,
             "phone": a.client.phone,
-        } if a.client else None,
+        },
         "barber": {
             "id": a.barber.id,
             "name": a.barber.name,
-        } if a.barber else None,
+        },
         "service": {
             "id": a.service.id,
             "name": a.service.name,
-            "price": float(a.service.price),
-            "duration_minutes": a.service.duration_minutes,
-        } if a.service else None,
+            "price": a.service.price,
+            "duration": a.service.duration,
+        },
     }
