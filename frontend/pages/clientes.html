@@ -141,13 +141,13 @@
       document.getElementById('f-phone').value  = data ? (data.phone || '') : '';
       document.getElementById('f-email').value  = data ? (data.email || '') : '';
       document.getElementById('f-notes').value  = data ? (data.notes || '') : '';
-      document.getElementById('modal').classList.remove('hidden');
+      document.getElementById('modal').classList.add('show');
     }
 
     function editClient(c) { openModal(c); }
 
     function closeModal() {
-      document.getElementById('modal').classList.add('hidden');
+      document.getElementById('modal').classList.remove('show');
       document.getElementById('modal-form').reset();
       document.getElementById('edit-id').value = '';
     }
