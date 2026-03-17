@@ -4,7 +4,7 @@ Definição de todas as tabelas do banco de dados usando SQLAlchemy ORM.
 """
 
 from datetime import datetime, timezone
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Enum, Boolean, Text, Time
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Enum, Boolean, Text
 from sqlalchemy.orm import relationship
 import enum
 
@@ -30,7 +30,6 @@ class PlanType(str, enum.Enum):
 
 class Barbershop(Base):
     __tablename__ = "barbershops"
-
     id         = Column(Integer, primary_key=True, index=True)
     name       = Column(String(100), nullable=False)
     slug       = Column(String(50), unique=True, index=True)
@@ -49,21 +48,19 @@ class Barbershop(Base):
 
 class User(Base):
     __tablename__ = "users"
-
-    id             = Column(Integer, primary_key=True, index=True)
-    name           = Column(String(100), nullable=False)
-    email          = Column(String(150), unique=True, index=True, nullable=False)
-    password_hash  = Column(String(200), nullable=False)
-    barbershop_id  = Column(Integer, ForeignKey("barbershops.id"), nullable=False)
-    is_active      = Column(Boolean, default=True)
-    created_at     = Column(DateTime, default=utcnow)
+    id            = Column(Integer, primary_key=True, index=True)
+    name          = Column(String(100), nullable=False)
+    email         = Column(String(150), unique=True, index=True, nullable=False)
+    password_hash = Column(String(200), nullable=False)
+    barbershop_id = Column(Integer, ForeignKey("barbershops.id"), nullable=False)
+    is_active     = Column(Boolean, default=True)
+    created_at    = Column(DateTime, default=utcnow)
 
     barbershop = relationship("Barbershop", back_populates="users")
 
 
 class Barber(Base):
     __tablename__ = "barbers"
-
     id            = Column(Integer, primary_key=True, index=True)
     name          = Column(String(100), nullable=False)
     phone         = Column(String(20), nullable=True)
@@ -74,30 +71,11 @@ class Barber(Base):
 
     barbershop   = relationship("Barbershop", back_populates="barbers")
     appointments = relationship("Appointment", back_populates="barber")
-    schedules    = relationship("BarberSchedule", back_populates="barber", cascade="all, delete-orphan")
-
-
-class BarberSchedule(Base):
-    """
-    Horário de trabalho do profissional por dia da semana.
-    weekday: 0=Segunda, 1=Terça, 2=Quarta, 3=Quinta, 4=Sexta, 5=Sábado, 6=Domingo
-    """
-    __tablename__ = "barber_schedules"
-
-    id            = Column(Integer, primary_key=True, index=True)
-    barber_id     = Column(Integer, ForeignKey("barbers.id"), nullable=False)
-    barbershop_id = Column(Integer, ForeignKey("barbershops.id"), nullable=False)
-    weekday       = Column(Integer, nullable=False)   # 0=Seg ... 6=Dom
-    start_time    = Column(String(5), nullable=False) # "08:00"
-    end_time      = Column(String(5), nullable=False) # "18:00"
-    is_active     = Column(Boolean, default=True)
-
-    barber = relationship("Barber", back_populates="schedules")
+    schedules    = relationship("BarberSchedule", back_populates="barber")
 
 
 class Service(Base):
     __tablename__ = "services"
-
     id            = Column(Integer, primary_key=True, index=True)
     name          = Column(String(100), nullable=False)
     description   = Column(Text, nullable=True)
@@ -113,7 +91,6 @@ class Service(Base):
 
 class Client(Base):
     __tablename__ = "clients"
-
     id            = Column(Integer, primary_key=True, index=True)
     name          = Column(String(100), nullable=False)
     phone         = Column(String(20), nullable=True)
@@ -128,7 +105,6 @@ class Client(Base):
 
 class Appointment(Base):
     __tablename__ = "appointments"
-
     id            = Column(Integer, primary_key=True, index=True)
     client_id     = Column(Integer, ForeignKey("clients.id"), nullable=False)
     barber_id     = Column(Integer, ForeignKey("barbers.id"), nullable=False)
@@ -145,163 +121,16 @@ class Appointment(Base):
     service    = relationship("Service", back_populates="appointments")
 
 
-# ─────────────────────────────────────────────
-# TABELA: Horários de trabalho dos profissionais
-# ─────────────────────────────────────────────
-
 class BarberSchedule(Base):
-    """
-    Define os horários de trabalho de cada profissional por dia da semana.
-    day_of_week: 0=Segunda, 1=Terça, 2=Quarta, 3=Quinta, 4=Sexta, 5=Sábado, 6=Domingo
-    """
+    """Horários de trabalho por dia da semana. day_of_week: 0=Seg ... 6=Dom"""
     __tablename__ = "barber_schedules"
-
     id            = Column(Integer, primary_key=True, index=True)
     barber_id     = Column(Integer, ForeignKey("barbers.id"), nullable=False)
     barbershop_id = Column(Integer, ForeignKey("barbershops.id"), nullable=False)
-    day_of_week   = Column(Integer, nullable=False)   # 0=Seg ... 6=Dom
+    day_of_week   = Column(Integer, nullable=False)
     start_time    = Column(String(5), nullable=False)  # "08:00"
     end_time      = Column(String(5), nullable=False)  # "18:00"
     is_active     = Column(Boolean, default=True)
 
-    barber     = relationship("Barber", backref="schedules")
-    barbershop = relationship("Barbershop")
-
-
-# ─────────────────────────────────────────────
-# TABELA: Horários de trabalho dos profissionais
-# ─────────────────────────────────────────────
-
-class BarberSchedule(Base):
-    """
-    Define os horários de trabalho de cada profissional por dia da semana.
-    day_of_week: 0=Segunda, 1=Terça, 2=Quarta, 3=Quinta, 4=Sexta, 5=Sábado, 6=Domingo
-    """
-    __tablename__ = "barber_schedules"
-
-    id            = Column(Integer, primary_key=True, index=True)
-    barber_id     = Column(Integer, ForeignKey("barbers.id"), nullable=False)
-    barbershop_id = Column(Integer, ForeignKey("barbershops.id"), nullable=False)
-    day_of_week   = Column(Integer, nullable=False)  # 0=Seg ... 6=Dom
-    start_time    = Column(String(5), nullable=False) # "08:00"
-    end_time      = Column(String(5), nullable=False) # "18:00"
-    is_active     = Column(Boolean, default=True)
-
-    barber     = relationship("Barber", backref="schedules")
-    barbershop = relationship("Barbershop")
-
-
-# ─────────────────────────────────────────────
-# TABELA: Agenda dos Profissionais
-# ─────────────────────────────────────────────
-
-class BarberSchedule(Base):
-    """
-    Horário de trabalho de cada profissional por dia da semana.
-    day_of_week: 0=Segunda, 1=Terça, 2=Quarta, 3=Quinta, 4=Sexta, 5=Sábado, 6=Domingo
-    """
-    __tablename__ = "barber_schedules"
-
-    id            = Column(Integer, primary_key=True, index=True)
-    barber_id     = Column(Integer, ForeignKey("barbers.id"), nullable=False)
-    barbershop_id = Column(Integer, ForeignKey("barbershops.id"), nullable=False)
-    day_of_week   = Column(Integer, nullable=False)   # 0=Seg ... 6=Dom
-    start_time    = Column(String(5), nullable=False)  # "08:00"
-    end_time      = Column(String(5), nullable=False)  # "18:00"
-    is_active     = Column(Boolean, default=True)
-
-    barber     = relationship("Barber")
-    barbershop = relationship("Barbershop")
-
-
-# ─────────────────────────────────────────────
-# TABELA: Agenda dos Profissionais
-# ─────────────────────────────────────────────
-
-class BarberSchedule(Base):
-    """
-    Define o horário de trabalho de cada profissional por dia da semana.
-    day_of_week: 0=Segunda, 1=Terça, 2=Quarta, 3=Quinta, 4=Sexta, 5=Sábado, 6=Domingo
-    """
-    __tablename__ = "barber_schedules"
-
-    id            = Column(Integer, primary_key=True, index=True)
-    barber_id     = Column(Integer, ForeignKey("barbers.id"), nullable=False)
-    barbershop_id = Column(Integer, ForeignKey("barbershops.id"), nullable=False)
-    day_of_week   = Column(Integer, nullable=False)   # 0=Seg ... 6=Dom
-    start_time    = Column(String(5), nullable=False)  # "08:00"
-    end_time      = Column(String(5), nullable=False)  # "18:00"
-    is_active     = Column(Boolean, default=True)
-
-    barber     = relationship("Barber", backref="schedules")
-    barbershop = relationship("Barbershop")
-
-
-# ─────────────────────────────────────────────
-# TABELA: Horários de trabalho dos profissionais
-# ─────────────────────────────────────────────
-
-class BarberSchedule(Base):
-    """
-    Define os dias e horários de trabalho de cada profissional.
-    Ex: Rafael trabalha Seg-Sex das 08:00 às 18:00
-    weekday: 0=Segunda, 1=Terça, 2=Quarta, 3=Quinta, 4=Sexta, 5=Sábado, 6=Domingo
-    """
-    __tablename__ = "barber_schedules"
-
-    id            = Column(Integer, primary_key=True, index=True)
-    barber_id     = Column(Integer, ForeignKey("barbers.id"), nullable=False)
-    barbershop_id = Column(Integer, ForeignKey("barbershops.id"), nullable=False)
-    weekday       = Column(Integer, nullable=False)   # 0=Seg ... 6=Dom
-    start_time    = Column(String(5), nullable=False) # "08:00"
-    end_time      = Column(String(5), nullable=False) # "18:00"
-    is_active     = Column(Boolean, default=True)
-
-    barber     = relationship("Barber", backref="schedules")
-    barbershop = relationship("Barbershop")
-
-
-# ─────────────────────────────────────────────
-# TABELA: Horários de trabalho dos profissionais
-# ─────────────────────────────────────────────
-
-class BarberSchedule(Base):
-    """
-    Define os horários de trabalho de cada profissional por dia da semana.
-    weekday: 0=Segunda, 1=Terça, 2=Quarta, 3=Quinta, 4=Sexta, 5=Sábado, 6=Domingo
-    """
-    __tablename__ = "barber_schedules"
-
-    id            = Column(Integer, primary_key=True, index=True)
-    barber_id     = Column(Integer, ForeignKey("barbers.id"), nullable=False)
-    barbershop_id = Column(Integer, ForeignKey("barbershops.id"), nullable=False)
-    weekday       = Column(Integer, nullable=False)  # 0=Seg ... 6=Dom
-    start_time    = Column(String(5), nullable=False)  # "08:00"
-    end_time      = Column(String(5), nullable=False)  # "18:00"
-    is_active     = Column(Boolean, default=True)
-
-    barber     = relationship("Barber", backref="schedules")
-    barbershop = relationship("Barbershop")
-
-
-# ─────────────────────────────────────────────
-# TABELA: Agenda dos Profissionais
-# ─────────────────────────────────────────────
-
-class BarberSchedule(Base):
-    """
-    Horário de trabalho de cada profissional por dia da semana.
-    day_of_week: 0=Segunda, 1=Terça, ..., 6=Domingo
-    """
-    __tablename__ = "barber_schedules"
-
-    id            = Column(Integer, primary_key=True, index=True)
-    barber_id     = Column(Integer, ForeignKey("barbers.id"), nullable=False)
-    barbershop_id = Column(Integer, ForeignKey("barbershops.id"), nullable=False)
-    day_of_week   = Column(Integer, nullable=False)   # 0=Seg, 1=Ter, 2=Qua, 3=Qui, 4=Sex, 5=Sab, 6=Dom
-    start_time    = Column(String(5), nullable=False)  # "08:00"
-    end_time      = Column(String(5), nullable=False)  # "18:00"
-    is_active     = Column(Boolean, default=True)
-
-    barber     = relationship("Barber", backref="schedules")
+    barber     = relationship("Barber", back_populates="schedules")
     barbershop = relationship("Barbershop")
