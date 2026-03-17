@@ -9,14 +9,15 @@
 <body>
   <div id="app-layout"></div>
 
-  <div id="modal" class="modal-overlay hidden">
+  <div id="modal" class="modal-overlay">
     <div class="modal-box">
       <div class="flex items-center justify-between mb-6">
         <h3 id="modal-title" class="text-lg font-semibold text-white">Novo Agendamento</h3>
-        <button type="button" onclick="closeModal()" class="text-gray-500 hover:text-white text-xl leading-none">&times;</button>
+        <button type="button" onclick="closeModal()" class="text-gray-500 hover:text-white text-2xl leading-none">&times;</button>
       </div>
       <form id="modal-form" onsubmit="saveAppointment(event)" class="space-y-4">
         <input type="hidden" id="edit-id" />
+
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-xs text-gray-400 mb-1.5 uppercase tracking-wide">Cliente *</label>
@@ -31,6 +32,7 @@
             </select>
           </div>
         </div>
+
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-xs text-gray-400 mb-1.5 uppercase tracking-wide">Serviço *</label>
@@ -43,19 +45,22 @@
             <input type="datetime-local" id="f-datetime" required class="input-field" />
           </div>
         </div>
-        <div id="status-row" class="hidden">
+
+        <div id="status-row">
           <label class="block text-xs text-gray-400 mb-1.5 uppercase tracking-wide">Status</label>
           <select id="f-status" class="input-field">
             <option value="confirmed">Confirmado</option>
             <option value="pending">Pendente</option>
-            <option value="completed">Concluído</option>
-            <option value="cancelled">Cancelado</option>
+            <option value="completed">Concluído ✓</option>
+            <option value="cancelled">Cancelado ✗</option>
           </select>
         </div>
+
         <div>
           <label class="block text-xs text-gray-400 mb-1.5 uppercase tracking-wide">Observações</label>
           <textarea id="f-notes" rows="2" placeholder="Opcional..." class="input-field resize-none"></textarea>
         </div>
+
         <div class="flex gap-3 pt-2">
           <button type="submit" class="btn-gold flex-1 py-2.5">Salvar</button>
           <button type="button" onclick="closeModal()" class="btn-ghost px-6">Cancelar</button>
@@ -71,6 +76,23 @@
 
     let allClients = [], allBarbers = [], allServices = [];
     let selectedDate = todayISO();
+
+    // Converte datetime UTC do servidor para input datetime-local (horário local do browser)
+    function utcToLocal(isoString) {
+      const dt = new Date(isoString);
+      // Subtrai o offset do fuso local para obter o horário correto no input
+      const offset = dt.getTimezoneOffset() * 60000;
+      return new Date(dt.getTime() - offset).toISOString().slice(0, 16);
+    }
+
+    // Formata para exibição na tabela usando horário local do browser
+    function formatLocalTime(isoString) {
+      const dt = new Date(isoString);
+      return {
+        time: dt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+        date: dt.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+      };
+    }
 
     async function init() {
       try {
@@ -103,13 +125,23 @@
               <h1 class="font-display text-4xl tracking-wider gold">AGENDA</h1>
               <p class="text-gray-500 text-sm mt-1">Gerencie os agendamentos</p>
             </div>
-            <button onclick="openModal()" class="btn-gold flex items-center gap-2 px-5 py-2.5">
-              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-              </svg>
-              Novo Agendamento
-            </button>
+            <div class="flex gap-3">
+              <button onclick="exportAgenda()" class="btn-ghost flex items-center gap-2 px-4 py-2.5 text-sm">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                </svg>
+                Exportar
+              </button>
+              <button onclick="openModal()" class="btn-gold flex items-center gap-2 px-5 py-2.5">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Novo Agendamento
+              </button>
+            </div>
           </div>
+
           <div class="card p-4 mb-6 flex items-center gap-4">
             <label class="text-xs text-gray-400 uppercase tracking-wide whitespace-nowrap">Filtrar por data:</label>
             <input type="date" id="date-picker" value="${selectedDate}"
@@ -117,6 +149,7 @@
             <button onclick="changeDate(todayISO())" class="btn-ghost text-xs px-3 py-2">Hoje</button>
             <button onclick="changeDate('')"          class="btn-ghost text-xs px-3 py-2">Todos</button>
           </div>
+
           <div class="card overflow-hidden" id="appointments-table">
             <div class="text-center py-14 text-gray-500 text-sm">Carregando...</div>
           </div>
@@ -137,10 +170,10 @@
     function renderTable(appointments) {
       const table = document.getElementById('appointments-table');
       const statusMap = {
-        confirmed: ['badge-confirmed','Confirmado'],
-        pending:   ['badge-pending','Pendente'],
-        completed: ['badge-completed','Concluído'],
-        cancelled: ['badge-cancelled','Cancelado'],
+        confirmed: ['badge-confirmed', 'Confirmado'],
+        pending:   ['badge-pending',   'Pendente'],
+        completed: ['badge-completed', 'Concluído'],
+        cancelled: ['badge-cancelled', 'Cancelado'],
       };
 
       if (!appointments.length) {
@@ -150,33 +183,37 @@
 
       table.innerHTML = `
         <div class="grid gap-4 px-5 py-3 text-xs text-gray-500 uppercase tracking-wider border-b"
-             style="grid-template-columns: 130px 1fr 1fr 1fr 100px 80px 100px; border-color:#1a1a1a;">
+             style="grid-template-columns: 120px 1fr 1fr 1fr 90px 90px 90px; border-color:#1a1a1a;">
           <div>Horário</div><div>Cliente</div><div>Profissional</div><div>Serviço</div>
           <div>Valor</div><div>Status</div><div>Ações</div>
         </div>
         ${appointments.map(a => {
           const [cls, label] = statusMap[a.status] || ['badge-pending', a.status];
-          const dt = new Date(a.datetime);
-          const dateStr = dt.toLocaleDateString('pt-BR', {day:'2-digit',month:'2-digit'});
-          const timeStr = dt.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
+          const { time, date } = formatLocalTime(a.datetime);
           return `
             <div class="table-row grid gap-4 px-5 py-4 items-center"
-                 style="grid-template-columns: 130px 1fr 1fr 1fr 100px 80px 100px;">
+                 style="grid-template-columns: 120px 1fr 1fr 1fr 90px 90px 90px;">
               <div>
-                <div class="text-white font-medium text-sm">${timeStr}</div>
-                <div class="text-gray-500 text-xs">${dateStr}</div>
+                <div class="text-white font-semibold text-sm">${time}</div>
+                <div class="text-gray-500 text-xs">${date}</div>
               </div>
               <div class="text-gray-200 text-sm font-medium">${a.client.name}</div>
               <div class="text-gray-400 text-sm">${a.barber.name}</div>
               <div class="text-gray-400 text-sm">${a.service.name}</div>
               <div class="text-amber-400 text-sm font-medium">${formatCurrency(a.service.price)}</div>
-              <div><span class="${cls} text-xs px-2 py-0.5 rounded-full">${label}</span></div>
+              <div><span class="${cls} text-xs px-2 py-0.5 rounded-full font-medium">${label}</span></div>
               <div class="flex gap-2">
                 <button onclick='editAppointment(${JSON.stringify(a).replace(/'/g,"&#39;")})'
-                        class="text-gray-400 hover:text-white transition-colors" title="Editar">
+                        class="text-gray-400 hover:text-amber-400 transition-colors" title="Editar">
                   <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                  </svg>
+                </button>
+                <button onclick="quickComplete(${a.id})"
+                        class="text-gray-400 hover:text-green-400 transition-colors" title="Marcar como concluído">
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                   </svg>
                 </button>
                 <button onclick="cancelAppointment(${a.id})"
@@ -205,16 +242,16 @@
       document.getElementById('f-barber').value  = editData ? editData.barber.id : '';
       document.getElementById('f-service').value = editData ? editData.service.id : '';
       document.getElementById('f-notes').value   = editData ? (editData.notes || '') : '';
-      document.getElementById('status-row').classList.toggle('hidden', !editData);
+      document.getElementById('f-status').value  = editData ? editData.status : 'confirmed';
 
       if (editData) {
-        const dt = new Date(editData.datetime);
-        const local = new Date(dt.getTime() - dt.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-        document.getElementById('f-datetime').value = local;
-        document.getElementById('f-status').value   = editData.status;
+        // Converte UTC para horário local do usuário para o input
+        document.getElementById('f-datetime').value = utcToLocal(editData.datetime);
       } else {
-        document.getElementById('f-datetime').value = '';
+        // Novo agendamento: preenche com horário atual local
+        document.getElementById('f-datetime').value = utcToLocal(new Date().toISOString());
       }
+
       document.getElementById('modal').classList.add('show');
     }
 
@@ -224,25 +261,35 @@
       document.getElementById('modal').classList.remove('show');
       document.getElementById('modal-form').reset();
       document.getElementById('edit-id').value = '';
-      document.getElementById('status-row').classList.add('hidden');
     }
 
     async function saveAppointment(e) {
       e.preventDefault();
       const id = document.getElementById('edit-id').value;
-      const dt = document.getElementById('f-datetime').value;
+      const dtValue = document.getElementById('f-datetime').value;
+
+      // O input datetime-local já está no horário local — o Date() converte para UTC automaticamente
       const body = {
         client_id:  parseInt(document.getElementById('f-client').value),
         barber_id:  parseInt(document.getElementById('f-barber').value),
         service_id: parseInt(document.getElementById('f-service').value),
-        datetime:   new Date(dt).toISOString(),
+        datetime:   new Date(dtValue).toISOString(),
         notes:      document.getElementById('f-notes').value || null,
+        status:     document.getElementById('f-status').value,
       };
-      if (id) body.status = document.getElementById('f-status').value;
+
       try {
         if (id) { await API.updateAppointment(id, body); showToast('Agendamento atualizado!'); }
         else    { await API.createAppointment(body);     showToast('Agendamento criado!'); }
         closeModal();
+        loadAppointments();
+      } catch(err) { showToast(err.message, 'error'); }
+    }
+
+    async function quickComplete(id) {
+      try {
+        await API.updateAppointment(id, { status: 'completed' });
+        showToast('Marcado como concluído! ✓', 'success');
         loadAppointments();
       } catch(err) { showToast(err.message, 'error'); }
     }
@@ -254,6 +301,35 @@
         showToast('Agendamento cancelado', 'info');
         loadAppointments();
       } catch(err) { showToast(err.message, 'error'); }
+    }
+
+    // Exporta a agenda atual para CSV
+    function exportAgenda() {
+      const table = document.getElementById('appointments-table');
+      const rows  = table.querySelectorAll('.table-row');
+      if (!rows.length) { showToast('Nenhum agendamento para exportar', 'info'); return; }
+
+      let csv = 'Horário,Data,Cliente,Profissional,Serviço,Valor,Status\n';
+      rows.forEach(row => {
+        const cols = row.querySelectorAll('div > div, div');
+        const time    = row.querySelector('.text-white.font-semibold')?.textContent?.trim() || '';
+        const date    = row.querySelector('.text-gray-500.text-xs')?.textContent?.trim() || '';
+        const cells   = row.querySelectorAll('.text-gray-200,.text-gray-400,.text-amber-400');
+        const status  = row.querySelector('[class*="badge-"]')?.textContent?.trim() || '';
+        if (time) {
+          const vals = Array.from(cells).map(c => `"${c.textContent.trim()}"`);
+          csv += `"${time}","${date}",${vals.join(','),"${status}"\n`;
+        }
+      });
+
+      const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href = url;
+      a.download = `agenda_${selectedDate || 'completa'}_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Agenda exportada!', 'success');
     }
 
     init();
