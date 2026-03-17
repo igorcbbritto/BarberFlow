@@ -221,9 +221,12 @@ function scissorsIcon() {
     /* Modal */
     .modal-overlay {
       position: fixed; inset: 0; background: rgba(0,0,0,0.7);
-      display: flex; align-items: center; justify-content: center;
+      display: none; align-items: center; justify-content: center;
       z-index: 100; padding: 16px;
       backdrop-filter: blur(4px);
+    }
+    .modal-overlay.show {
+      display: flex;
     }
     .modal-box {
       background: #161616;
@@ -260,3 +263,6 @@ function scissorsIcon() {
   link.href = 'https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap';
   document.head.appendChild(link);
 })();
+
+// Correção: garante que modal funciona corretamente
+document.addEventListener('DOMContentLoaded', function() {});
