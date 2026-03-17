@@ -16,10 +16,16 @@ def utcnow():
 
 
 class AppointmentStatus(str, enum.Enum):
+    scheduled = "scheduled"   # NOVO: padrão ao criar
     pending   = "pending"
     confirmed = "confirmed"
     completed = "completed"
     cancelled = "cancelled"
+
+
+class PaymentStatus(str, enum.Enum):
+    unpaid = "unpaid"   # padrão
+    paid   = "paid"
 
 
 class PlanType(str, enum.Enum):
@@ -112,7 +118,8 @@ class Appointment(Base):
     service_id    = Column(Integer, ForeignKey("services.id"), nullable=False)
     barbershop_id = Column(Integer, ForeignKey("barbershops.id"), nullable=False)
     datetime      = Column(DateTime, nullable=False)
-    status        = Column(Enum(AppointmentStatus), default=AppointmentStatus.confirmed)
+    status        = Column(Enum(AppointmentStatus), default=AppointmentStatus.scheduled)
+    payment_status = Column(Enum(PaymentStatus), default=PaymentStatus.unpaid)
     notes         = Column(Text, nullable=True)
     created_at    = Column(DateTime, default=utcnow)
 
