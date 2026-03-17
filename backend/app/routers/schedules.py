@@ -77,6 +77,7 @@ def get_available_slots(
     service_id: int = Query(...),
     date: str = Query(..., description="YYYY-MM-DD"),
     slug: str = Query(...),
+    tz_offset: int = Query(180, description="Offset em minutos (padrão 180 = Brasília UTC-3)"),
     db: Session = Depends(get_db)
 ):
     """
@@ -142,8 +143,8 @@ def get_available_slots(
         all_slots.append(current)
         current += timedelta(minutes=slot_duration)
 
-    # Busca ocupados — banco em UTC, Brasília = UTC-3
-    offset = timedelta(hours=3)
+    # Busca ocupados — banco em UTC, converte usando offset enviado pelo browser
+    offset = timedelta(minutes=tz_offset)
     day_start_utc = datetime.combine(filter_date, datetime.min.time()) + offset
     day_end_utc   = datetime.combine(filter_date, datetime.max.time()) + offset
 
@@ -160,8 +161,8 @@ def get_available_slots(
         local_dt = appt.datetime - offset
         occupied.add(local_dt.strftime("%H:%M"))
 
-    # Horário atual em Brasília
-    now_brasilia = datetime.utcnow() - timedelta(hours=3)
+    # Horário atual no fuso do usuário
+    now_brasilia = datetime.utcnow() - timedelta(minutes=tz_offset)
 
     available = []
     for slot in all_slots:
