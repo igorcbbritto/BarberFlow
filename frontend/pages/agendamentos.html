@@ -317,8 +317,8 @@
         const cells   = row.querySelectorAll('.text-gray-200,.text-gray-400,.text-amber-400');
         const status  = row.querySelector('[class*="badge-"]')?.textContent?.trim() || '';
         if (time) {
-          const vals = Array.from(cells).map(c => `"${c.textContent.trim()}"`);
-          csv += `"${time}","${date}",${vals.join(','),"${status}"\n`;
+          const vals = Array.from(cells).map(c => '"' + c.textContent.trim() + '"');
+          csv += '"' + time + '","' + date + '",' + vals.join(',') + ',"' + status + '"\n';
         }
       });
 
