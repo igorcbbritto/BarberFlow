@@ -4,7 +4,7 @@ Definição de todas as tabelas do banco de dados usando SQLAlchemy ORM.
 """
 
 from datetime import datetime, timezone
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Float, Boolean
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Float, Boolean, Enum
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import JSON
 
