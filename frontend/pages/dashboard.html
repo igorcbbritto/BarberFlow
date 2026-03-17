@@ -20,7 +20,8 @@
       content.innerHTML = `<div class="flex items-center justify-center h-64 text-gray-500">Carregando...</div>`;
 
       try {
-        const data = await API.dashboard();
+        const offset = new Date().getTimezoneOffset();
+        const data = await API.dashboard(offset);
         renderDashboard(data);
       } catch (err) {
         content.innerHTML = `<div class="text-red-400 text-center py-20">${err.message}</div>`;
