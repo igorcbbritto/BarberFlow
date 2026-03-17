@@ -150,14 +150,15 @@ def update_appointment(
         raise HTTPException(status_code=404, detail="Agendamento não encontrado")
     
     update_data = data.model_dump(exclude_unset=True)
-    
-    # Remove timezone info do datetime para compatibilidade com o banco
-    if 'datetime' in update_data and update_data['datetime'] is not None:
-        dt = update_data['datetime']
+
+    # Trata o campo de data/hora (renomeado para evitar conflito com módulo datetime)
+    from datetime import timezone as tz
+    if 'appointment_datetime' in update_data and update_data['appointment_datetime'] is not None:
+        dt = update_data.pop('appointment_datetime')
         if hasattr(dt, 'tzinfo') and dt.tzinfo is not None:
-            from datetime import timezone
-            update_data['datetime'] = dt.astimezone(timezone.utc).replace(tzinfo=None)
-    
+            dt = dt.astimezone(tz.utc).replace(tzinfo=None)
+        update_data['datetime'] = dt
+
     for field, value in update_data.items():
         setattr(appointment, field, value)
     
