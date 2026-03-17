@@ -75,8 +75,7 @@
     initLayout('agendamentos');
 
     let allClients = [], allBarbers = [], allServices = [], allAppointments = [];
-    let selectedBarber = '';   // '' = todos os profissionais
-
+    let selectedBarber = '';
     // Usa a data local do browser (não UTC) para o filtro
     function localTodayISO() {
       const now = new Date();
@@ -141,12 +140,12 @@
     function renderPage() {
       document.getElementById('page-content').innerHTML = `
         <div class="fade-in">
-          <div class="flex items-center justify-between mb-6">
+          <div class="flex items-center justify-between mb-6 page-header">
             <div>
               <h1 class="font-display text-4xl tracking-wider gold">AGENDA</h1>
               <p class="text-gray-500 text-sm mt-1">Gerencie os agendamentos</p>
             </div>
-            <div class="flex gap-3">
+            <div class="flex gap-3 page-header">
               <button onclick="exportAgenda()" class="btn-ghost flex items-center gap-2 px-4 py-2.5 text-sm">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -163,13 +162,13 @@
             </div>
           </div>
 
-          <div class="card p-4 mb-6 flex flex-wrap items-center gap-4">
-            <label class="text-xs text-gray-400 uppercase tracking-wide whitespace-nowrap">Filtrar por data:</label>
+          <div class="card p-4 mb-6 flex items-center gap-4 filters-bar">
+            <label class="text-xs text-gray-400 uppercase tracking-wide whitespace-nowrap">Data:</label>
             <input type="date" id="date-picker" value="${selectedDate}"
                    onchange="changeDate(this.value)" class="input-field" style="width:auto;" />
             <button onclick="changeDate(localTodayISO())" class="btn-ghost text-xs px-3 py-2">Hoje</button>
-            <button onclick="changeDate('')"              class="btn-ghost text-xs px-3 py-2">Todos</button>
-            <div class="h-5 border-l border-gray-700 hidden sm:block"></div>
+            <button onclick="changeDate('')" class="btn-ghost text-xs px-3 py-2">Todos</button>
+            <div class="h-5 border-l border-gray-700 divider"></div>
             <label class="text-xs text-gray-400 uppercase tracking-wide whitespace-nowrap">Profissional:</label>
             <select id="barber-filter" onchange="changeBarber(this.value)" class="input-field" style="width:auto;">
               <option value="">Todos</option>
@@ -189,7 +188,7 @@
       try {
         // Envia a data E o offset do fuso do browser (ex: -180 para Brasília UTC-3)
         // O backend usa isso para filtrar corretamente independente do fuso
-        const offset = new Date().getTimezoneOffset(); // minutos atrás de UTC
+        const offset = new Date().getTimezoneOffset();
         const raw = await API.getAppointments(selectedDate, offset);
         allAppointments = raw;
         renderTable(raw);
@@ -199,7 +198,6 @@
     }
 
     function renderTable(appointments) {
-      // Aplica filtro de profissional (front-end, sem nova chamada à API)
       const list = selectedBarber
         ? appointments.filter(a => String(a.barber.id) === String(selectedBarber))
         : appointments;
@@ -218,7 +216,7 @@
       }
 
       table.innerHTML = `
-        <div class="grid gap-4 px-5 py-3 text-xs text-gray-500 uppercase tracking-wider border-b"
+        <div class="table-header-row grid gap-4 px-5 py-3 text-xs text-gray-500 uppercase tracking-wider border-b"
              style="grid-template-columns: 120px 1fr 1fr 1fr 90px 90px 90px; border-color:#1a1a1a;">
           <div>Horário</div><div>Cliente</div><div>Profissional</div><div>Serviço</div>
           <div>Valor</div><div>Status</div><div>Ações</div>
@@ -226,6 +224,26 @@
         ${list.map(a => {
           const [cls, label] = statusMap[a.status] || ['badge-pending', a.status];
           const { time, date } = formatLocalTime(a.datetime);
+          const actionsHTML = `
+            <button onclick='editAppointment(${JSON.stringify(a).replace(/'/g,"&#39;")})'
+                    class="text-gray-400 hover:text-amber-400 transition-colors" title="Editar">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+              </svg>
+            </button>
+            <button onclick="quickComplete(${a.id})"
+                    class="text-gray-400 hover:text-green-400 transition-colors" title="Concluído">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+            </button>
+            <button onclick="cancelAppointment(${a.id})"
+                    class="text-gray-500 hover:text-red-400 transition-colors" title="Cancelar">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>`;
           return `
             <div class="table-row grid gap-4 px-5 py-4 items-center"
                  style="grid-template-columns: 120px 1fr 1fr 1fr 90px 90px 90px;">
@@ -238,27 +256,24 @@
               <div class="text-gray-400 text-sm">${a.service.name}</div>
               <div class="text-amber-400 text-sm font-medium">${formatCurrency(a.service.price)}</div>
               <div><span class="${cls} text-xs px-2 py-0.5 rounded-full font-medium">${label}</span></div>
-              <div class="flex gap-2">
-                <button onclick='editAppointment(${JSON.stringify(a).replace(/'/g,"&#39;")})'
-                        class="text-gray-400 hover:text-amber-400 transition-colors" title="Editar">
-                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                  </svg>
-                </button>
-                <button onclick="quickComplete(${a.id})"
-                        class="text-gray-400 hover:text-green-400 transition-colors" title="Marcar como concluído">
-                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                  </svg>
-                </button>
-                <button onclick="cancelAppointment(${a.id})"
-                        class="text-gray-500 hover:text-red-400 transition-colors" title="Cancelar">
-                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                  </svg>
-                </button>
+              <div class="flex gap-2">${actionsHTML}</div>
+            </div>
+            <div class="table-row-mobile">
+              <div class="mobile-row-top">
+                <div>
+                  <span class="text-white font-semibold">${time}</span>
+                  <span class="text-gray-500 text-xs ml-2">${date}</span>
+                </div>
+                <span class="${cls} text-xs px-2 py-0.5 rounded-full font-medium">${label}</span>
               </div>
+              <div class="text-white text-sm font-medium mt-1">${a.client.name}</div>
+              <div class="mobile-row-mid">
+                <span class="text-gray-400 text-xs">${a.barber.name}</span>
+                <span class="text-gray-600 text-xs">·</span>
+                <span class="text-gray-400 text-xs">${a.service.name}</span>
+                <span class="text-amber-400 text-xs font-medium">${formatCurrency(a.service.price)}</span>
+              </div>
+              <div class="mobile-row-actions">${actionsHTML}</div>
             </div>`;
         }).join('')}`;
     }
