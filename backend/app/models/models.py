@@ -72,6 +72,7 @@ class Barber(Base):
     is_active     = Column(Boolean, default=True)
     barbershop_id = Column(Integer, ForeignKey("barbershops.id"), nullable=False)
     created_at    = Column(DateTime, default=utcnow)
+    working_hours = Column(JSON, nullable=True, default={})
 
     barbershop   = relationship("Barbershop", back_populates="barbers")
     appointments = relationship("Appointment", back_populates="barber")
