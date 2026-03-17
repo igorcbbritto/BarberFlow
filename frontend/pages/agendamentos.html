@@ -97,15 +97,20 @@
              pad(dt.getMinutes());
     }
 
-    // Formata para exibição na tabela usando horário local do browser
-    // O servidor salva em UTC sem 'Z', então adicionamos para o browser converter corretamente
+    // Formata para exibição na tabela usando o fuso do browser
     function formatLocalTime(isoString) {
+      // Garante que o browser interpreta como UTC adicionando Z
       const utcString = isoString.endsWith('Z') ? isoString : isoString + 'Z';
       const dt = new Date(utcString);
-      return {
-        time: dt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-        date: dt.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
-      };
+      // Usa Intl com timezone do browser para garantir conversão correta
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const time = new Intl.DateTimeFormat('pt-BR', {
+        hour: '2-digit', minute: '2-digit', timeZone: tz
+      }).format(dt);
+      const date = new Intl.DateTimeFormat('pt-BR', {
+        day: '2-digit', month: '2-digit', timeZone: tz
+      }).format(dt);
+      return { time, date };
     }
 
     async function init() {
