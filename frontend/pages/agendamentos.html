@@ -215,13 +215,13 @@
       } else {
         document.getElementById('f-datetime').value = '';
       }
-      document.getElementById('modal').classList.remove('hidden');
+      document.getElementById('modal').classList.add('show');
     }
 
     function editAppointment(a) { openModal(a); }
 
     function closeModal() {
-      document.getElementById('modal').classList.add('hidden');
+      document.getElementById('modal').classList.remove('show');
       document.getElementById('modal-form').reset();
       document.getElementById('edit-id').value = '';
       document.getElementById('status-row').classList.add('hidden');
