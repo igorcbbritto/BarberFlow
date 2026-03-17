@@ -10,7 +10,7 @@ Schemas Pydantic para validação de dados de entrada e saída da API.
 from datetime import datetime
 from typing import Optional, List
 from pydantic import BaseModel, EmailStr, field_validator
-from app.models.models import AppointmentStatus, PlanType
+from app.models.models import AppointmentStatus, PaymentStatus, PlanType
 
 
 # ═══════════════════════════════════════════
@@ -204,6 +204,7 @@ class AppointmentUpdate(BaseModel):
     service_id: Optional[int] = None
     appointment_datetime: Optional[datetime] = None
     status: Optional[AppointmentStatus] = None
+    payment_status: Optional[PaymentStatus] = None
     notes: Optional[str] = None
 
     model_config = {"populate_by_name": True}
@@ -214,6 +215,7 @@ class AppointmentResponse(BaseModel):
     id: int
     datetime: datetime
     status: AppointmentStatus
+    payment_status: PaymentStatus
     notes: Optional[str]
     barbershop_id: int
     created_at: datetime
