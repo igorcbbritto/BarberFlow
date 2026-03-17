@@ -304,11 +304,34 @@ def public_book_appointment(
     if not service:
         raise HTTPException(status_code=404, detail="Serviço não disponível")
     
+    # Remove timezone info para salvar UTC puro
+    from datetime import timezone as tz, timedelta
+    dt_public = data.datetime
+    if hasattr(dt_public, 'tzinfo') and dt_public.tzinfo is not None:
+        dt_public = dt_public.astimezone(tz.utc).replace(tzinfo=None)
+
+    # Valida conflito de horário — mesmo profissional no mesmo horário
+    conflito_pub = db.query(Appointment).filter(
+        Appointment.barber_id == data.barber_id,
+        Appointment.barbershop_id == barbershop.id,
+        Appointment.status.notin_([AppointmentStatus.cancelled]),
+        Appointment.datetime >= dt_public - timedelta(minutes=59),
+        Appointment.datetime <= dt_public + timedelta(minutes=59),
+    ).first()
+
+    if conflito_pub:
+        # Converte UTC para Brasília para mostrar na mensagem
+        local_time = (conflito_pub.datetime - timedelta(hours=3)).strftime('%H:%M')
+        raise HTTPException(
+            status_code=400,
+            detail=f"Este horário já está ocupado ({local_time}). Por favor escolha outro horário."
+        )
+
     appointment = Appointment(
         client_id=client.id,
         barber_id=data.barber_id,
         service_id=data.service_id,
-        datetime=data.datetime,
+        datetime=dt_public,
         barbershop_id=barbershop.id,
         status=AppointmentStatus.confirmed
     )
@@ -323,6 +346,131 @@ def public_book_appointment(
         "service": service.name,
     }
 
+
+
+
+@router.get("/public/{slug}/slots")
+def get_available_slots(
+    slug: str,
+    barber_id: int,
+    service_id: int,
+    date: str,  # YYYY-MM-DD no fuso local do cliente
+    db: Session = Depends(get_db)
+):
+    """
+    Retorna horários vagos de um profissional em uma data.
+    Considera: horário de trabalho, duração do serviço e agendamentos existentes.
+    """
+    from datetime import timedelta, time
+    from app.models.models import BarberSchedule
+
+    barbershop = db.query(Barbershop).filter(
+        Barbershop.slug == slug,
+        Barbershop.is_active == True
+    ).first()
+    if not barbershop:
+        raise HTTPException(status_code=404, detail="Barbearia não encontrada")
+
+    # Valida serviço
+    service = db.query(Service).filter(
+        Service.id == service_id,
+        Service.barbershop_id == barbershop.id,
+        Service.is_active == True
+    ).first()
+    if not service:
+        raise HTTPException(status_code=404, detail="Serviço não encontrado")
+
+    # Parse da data enviada pelo cliente (já no fuso local dele)
+    try:
+        filter_date = datetime.strptime(date, "%Y-%m-%d").date()
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Data inválida. Use YYYY-MM-DD")
+
+    # Dia da semana: 0=Segunda...6=Domingo (Python: Monday=0)
+    dia_semana = filter_date.weekday()
+
+    # Busca horário de trabalho do profissional nesse dia
+    schedule = db.query(BarberSchedule).filter(
+        BarberSchedule.barber_id == barber_id,
+        BarberSchedule.barbershop_id == barbershop.id,
+        BarberSchedule.dia_semana == dia_semana,
+        BarberSchedule.ativo == True
+    ).first()
+
+    # Se não tem horário configurado, usa padrão 08:00-18:00
+    if schedule:
+        h_inicio = int(schedule.hora_inicio.split(":")[0])
+        m_inicio = int(schedule.hora_inicio.split(":")[1])
+        h_fim    = int(schedule.hora_fim.split(":")[0])
+        m_fim    = int(schedule.hora_fim.split(":")[1])
+    else:
+        h_inicio, m_inicio = 8,  0
+        h_fim,    m_fim    = 18, 0
+
+    # Busca agendamentos do dia para este barbeiro (o banco está em UTC, offset=0 por default)
+    # O cliente envia a data local, o banco guarda UTC — assumimos UTC=local para simplicidade
+    # (o offset já é tratado na exibição pelo frontend)
+    day_start = datetime.combine(filter_date, datetime.min.time())
+    day_end   = datetime.combine(filter_date, datetime.max.time())
+
+    existing = db.query(Appointment).filter(
+        Appointment.barber_id == barber_id,
+        Appointment.barbershop_id == barbershop.id,
+        Appointment.status.notin_([AppointmentStatus.cancelled]),
+        Appointment.datetime >= day_start,
+        Appointment.datetime <= day_end,
+    ).all()
+
+    # Horários já ocupados (início e fim de cada agendamento existente)
+    occupied = []
+    for a in existing:
+        a_service = db.query(Service).filter(Service.id == a.service_id).first()
+        dur = a_service.duration if a_service else 30
+        occupied.append((a.datetime, a.datetime + timedelta(minutes=dur)))
+
+    # Gera slots de acordo com a duração do serviço escolhido
+    duration = service.duration
+    slots = []
+    current = datetime.combine(filter_date, time(h_inicio, m_inicio))
+    end_of_day = datetime.combine(filter_date, time(h_fim, m_fim))
+
+    now_utc = datetime.now()  # Para não mostrar slots no passado
+    today = now_utc.date()
+
+    while current + timedelta(minutes=duration) <= end_of_day:
+        slot_end = current + timedelta(minutes=duration)
+
+        # Não mostrar slots no passado (só para hoje)
+        if filter_date == today and current <= now_utc:
+            current += timedelta(minutes=30)
+            continue
+
+        # Verifica conflito com agendamentos existentes
+        conflict = False
+        for occ_start, occ_end in occupied:
+            if current < occ_end and slot_end > occ_start:
+                conflict = True
+                break
+
+        if not conflict:
+            slots.append({
+                "time": current.strftime("%H:%M"),
+                "datetime_local": current.isoformat(),
+            })
+
+        current += timedelta(minutes=30)
+
+    return {
+        "date": date,
+        "barber_id": barber_id,
+        "service_duration": duration,
+        "slots": slots,
+        "working": True if schedule else False,
+        "schedule": {
+            "inicio": schedule.hora_inicio if schedule else "08:00",
+            "fim": schedule.hora_fim if schedule else "18:00",
+        }
+    }
 
 # ─────────────────────────────────────────────
 # Função auxiliar para formatar resposta
