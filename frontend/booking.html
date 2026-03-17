@@ -2,187 +2,319 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
   <title>Agendar Online</title>
-  <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <style>
-    :root { --gold: #C9A84C; --dark: #0D0D0D; }
-    body { font-family: 'DM Sans', sans-serif; background: var(--dark); color: #e5e5e5; }
-    .font-display { font-family: 'Bebas Neue', cursive; }
-    .gold { color: var(--gold); }
-
-    .input-field {
-      background: #1a1a1a; border: 1px solid #2a2a2a; color: #e5e5e5;
-      border-radius: 10px; padding: 11px 14px; font-size: 14px; width: 100%;
-      transition: border-color 0.2s; font-family: inherit;
+    :root {
+      --gold: #C9A84C;
+      --gold-dim: rgba(201,168,76,0.12);
+      --dark: #0C0C0C;
+      --surface: #111;
+      --surface2: #181818;
+      --border: #242424;
+      --text: #e4e4e7;
+      --muted: #71717a;
     }
-    .input-field:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,168,76,0.12); }
-    .input-field::placeholder { color: #444; }
-    select.input-field option { background: #1a1a1a; }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body { min-height: 100%; background: var(--dark); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 15px; }
 
-    .card { background: #111; border: 1px solid #1e1e1e; border-radius: 16px; }
+    /* ── HEADER ── */
+    .shop-header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 20px 16px 16px;
+      text-align: center;
+      position: sticky; top: 0; z-index: 10;
+    }
+    .shop-logo {
+      width: 48px; height: 48px; border-radius: 14px;
+      background: rgba(201,168,76,0.12);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 10px;
+    }
+    .shop-name { font-family: 'Bebas Neue', cursive; font-size: 26px; letter-spacing: 0.08em; color: var(--gold); }
+    .shop-address { font-size: 12px; color: var(--muted); margin-top: 2px; }
 
-    /* Cards de seleção (serviços, barbeiros) */
+    /* ── STEPS BAR ── */
+    .steps-bar {
+      display: flex; align-items: center;
+      padding: 14px 16px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      gap: 6px;
+    }
+    .step-item { display: flex; align-items: center; gap: 6px; flex: 1; }
+    .step-num {
+      width: 26px; height: 26px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 600; flex-shrink: 0;
+      transition: all 0.2s;
+    }
+    .step-num.done   { background: rgba(201,168,76,0.2); color: var(--gold); }
+    .step-num.active { background: var(--gold); color: #0C0C0C; }
+    .step-num.pending{ background: #222; color: #555; }
+    .step-label { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .step-label.active { color: var(--text); font-weight: 500; }
+    .step-line { flex: 0 0 12px; height: 1px; background: var(--border); }
+
+    /* ── MAIN CONTENT ── */
+    .content { padding: 16px; max-width: 500px; margin: 0 auto; }
+
+    /* ── CARDS DE SELEÇÃO ── */
     .select-card {
-      background: #161616; border: 2px solid #222; border-radius: 12px;
-      padding: 14px 16px; cursor: pointer; transition: all 0.2s;
+      background: var(--surface2);
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 16px;
+      cursor: pointer;
+      transition: all 0.15s;
+      margin-bottom: 10px;
+      display: flex; align-items: center; gap: 14px;
     }
-    .select-card:hover  { border-color: #444; }
-    .select-card.active { border-color: var(--gold); background: rgba(201,168,76,0.05); }
-
-    .btn-gold {
-      background: var(--gold); color: #0D0D0D; font-weight: 600;
-      border: none; cursor: pointer; transition: all 0.2s;
-      border-radius: 10px; padding: 13px 24px; font-size: 14px; width: 100%;
-      letter-spacing: 0.04em;
+    .select-card:active { transform: scale(0.98); }
+    .select-card.selected { border-color: var(--gold); background: rgba(201,168,76,0.06); }
+    .select-card-icon {
+      width: 42px; height: 42px; border-radius: 12px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Bebas Neue', cursive; font-size: 18px;
     }
-    .btn-gold:hover { background: #E8C97A; transform: translateY(-1px); }
-    .btn-gold:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+    .select-card-body { flex: 1; min-width: 0; }
+    .select-card-title { font-weight: 600; color: #fff; font-size: 15px; }
+    .select-card-sub   { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .select-card-right { font-weight: 700; color: var(--gold); font-size: 15px; white-space: nowrap; }
 
-    .step-indicator { display: flex; align-items: center; gap: 8px; }
-    .step-dot {
-      width: 28px; height: 28px; border-radius: 50%; display: flex;
-      align-items: center; justify-content: center; font-size: 12px; font-weight: 600;
+    /* ── CALENDÁRIO ── */
+    .date-scroller {
+      display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px;
+      scrollbar-width: none; -ms-overflow-style: none;
+      margin-bottom: 20px;
     }
-    .step-dot.done    { background: rgba(201,168,76,0.2); color: var(--gold); }
-    .step-dot.active  { background: var(--gold); color: #0D0D0D; }
-    .step-dot.pending { background: #1e1e1e; color: #555; }
-    .step-line { flex: 1; height: 1px; background: #222; }
+    .date-scroller::-webkit-scrollbar { display: none; }
+    .date-chip {
+      flex-shrink: 0; width: 56px; padding: 10px 6px; border-radius: 12px;
+      background: var(--surface2); border: 2px solid var(--border);
+      text-align: center; cursor: pointer; transition: all 0.15s;
+    }
+    .date-chip:active { transform: scale(0.95); }
+    .date-chip.selected { border-color: var(--gold); background: rgba(201,168,76,0.08); }
+    .date-chip.today .date-day { color: var(--gold); }
+    .date-chip-weekday { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .date-day  { font-size: 20px; font-weight: 700; color: #fff; line-height: 1.2; margin: 2px 0; }
+    .date-month{ font-size: 10px; color: var(--muted); }
 
-    @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
-    .fade-in { animation: fadeIn 0.3s ease; }
+    /* ── SLOTS DE HORÁRIO ── */
+    .slots-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    @media (min-width: 380px) { .slots-grid { grid-template-columns: repeat(4, 1fr); } }
+    .slot-btn {
+      padding: 12px 6px; border-radius: 12px; text-align: center;
+      background: var(--surface2); border: 2px solid var(--border);
+      cursor: pointer; transition: all 0.15s;
+      font-size: 14px; font-weight: 600; color: #fff;
+    }
+    .slot-btn:active { transform: scale(0.95); }
+    .slot-btn.selected { border-color: var(--gold); background: rgba(201,168,76,0.1); color: var(--gold); }
+    .slot-btn.unavailable { opacity: 0.3; cursor: not-allowed; }
+
+    /* ── FORMULÁRIO DO CLIENTE ── */
+    .form-group { margin-bottom: 14px; }
+    .form-label { display: block; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
+    .form-input {
+      width: 100%; background: var(--surface2); border: 2px solid var(--border);
+      color: var(--text); border-radius: 12px; padding: 13px 16px;
+      font-size: 15px; font-family: 'DM Sans', sans-serif;
+      transition: border-color 0.15s; -webkit-appearance: none;
+    }
+    .form-input:focus { outline: none; border-color: var(--gold); }
+    .form-input::placeholder { color: #444; }
+
+    /* ── RESUMO ── */
+    .summary-card {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 14px; padding: 16px; margin-bottom: 20px;
+    }
+    .summary-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; }
+    .summary-row:not(:last-child) { border-bottom: 1px solid var(--border); }
+    .summary-label { font-size: 13px; color: var(--muted); }
+    .summary-value { font-size: 13px; color: #fff; font-weight: 500; text-align: right; max-width: 60%; }
+    .summary-price { color: var(--gold); font-weight: 700; font-size: 16px; }
+
+    /* ── BOTÕES ── */
+    .btn-primary {
+      width: 100%; padding: 16px; border-radius: 14px;
+      background: var(--gold); color: #0C0C0C;
+      font-weight: 700; font-size: 16px; font-family: 'DM Sans', sans-serif;
+      border: none; cursor: pointer; transition: all 0.15s;
+      letter-spacing: 0.03em;
+    }
+    .btn-primary:active { transform: scale(0.98); }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-back {
+      display: flex; align-items: center; gap: 6px;
+      color: var(--muted); font-size: 14px; cursor: pointer;
+      padding: 8px 0; margin-bottom: 16px; background: none; border: none;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .btn-back:active { color: #fff; }
+
+    /* ── SEÇÃO TÍTULO ── */
+    .section-title { font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+    .section-sub   { font-size: 13px; color: var(--muted); margin-bottom: 18px; }
+
+    /* ── LOADING ── */
+    .loading {
+      text-align: center; padding: 40px 20px; color: var(--muted); font-size: 14px;
+    }
+    .spinner {
+      width: 32px; height: 32px; border: 3px solid var(--border);
+      border-top-color: var(--gold); border-radius: 50%;
+      animation: spin 0.8s linear infinite; margin: 0 auto 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── VAZIO ── */
+    .empty { text-align: center; padding: 30px 20px; color: var(--muted); }
+    .empty-icon { font-size: 36px; margin-bottom: 8px; }
+
+    /* ── SUCESSO ── */
+    .success-page { text-align: center; padding: 40px 20px; }
+    .success-icon {
+      width: 80px; height: 80px; border-radius: 50%;
+      background: rgba(52,211,153,0.1); border: 2px solid rgba(52,211,153,0.3);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 20px; font-size: 36px;
+    }
+    .success-title { font-family: 'Bebas Neue', cursive; font-size: 32px; color: #34d399; letter-spacing: 0.06em; margin-bottom: 8px; }
+    .success-sub { font-size: 14px; color: var(--muted); margin-bottom: 24px; }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+      background: #1e1e1e; border: 1px solid #333; color: #fff;
+      padding: 12px 20px; border-radius: 12px; font-size: 14px;
+      z-index: 999; white-space: nowrap; box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+      animation: toastIn 0.2s ease;
+    }
+    @keyframes toastIn { from { opacity:0; transform: translateX(-50%) translateY(10px); } }
+    .toast.error { border-color: rgba(239,68,68,0.4); color: #f87171; }
+
+    /* ── STEP PANELS ── */
+    .step-panel { display: none; }
+    .step-panel.active { display: block; animation: fadeIn 0.2s ease; }
+    @keyframes fadeIn { from { opacity:0; transform: translateY(6px); } to { opacity:1; transform: translateY(0); } }
   </style>
 </head>
-<body class="min-h-screen p-4 md:p-8">
+<body>
 
-  <div class="max-w-xl mx-auto">
+  <!-- HEADER -->
+  <div class="shop-header">
+    <div class="shop-logo">
+      <svg width="24" height="24" viewBox="0 0 36 36" fill="none">
+        <path d="M10 10 L20 20 M26 10 L16 20 M14 22 a4 4 0 1 0 4 4 M22 22 a4 4 0 1 0 4 4"
+              stroke="#C9A84C" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div id="shop-name" class="shop-name">Carregando...</div>
+    <div id="shop-address" class="shop-address"></div>
+  </div>
 
-    <!-- Header da barbearia -->
-    <div id="shop-header" class="text-center mb-8">
-      <div class="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
-           style="background:rgba(201,168,76,0.1);">
-        <svg width="32" height="32" viewBox="0 0 36 36" fill="none">
-          <path d="M10 10 L20 20 M26 10 L16 20 M14 22 a4 4 0 1 0 4 4 M22 22 a4 4 0 1 0 4 4"
-                stroke="#C9A84C" stroke-width="2" stroke-linecap="round"/>
-        </svg>
+  <!-- STEPS BAR -->
+  <div class="steps-bar">
+    <div class="step-item">
+      <div class="step-num active" id="s1">1</div>
+      <span class="step-label active" id="sl1">Serviço</span>
+    </div>
+    <div class="step-line"></div>
+    <div class="step-item">
+      <div class="step-num pending" id="s2">2</div>
+      <span class="step-label" id="sl2">Profissional</span>
+    </div>
+    <div class="step-line"></div>
+    <div class="step-item">
+      <div class="step-num pending" id="s3">3</div>
+      <span class="step-label" id="sl3">Horário</span>
+    </div>
+    <div class="step-line"></div>
+    <div class="step-item">
+      <div class="step-num pending" id="s4">4</div>
+      <span class="step-label" id="sl4">Confirmar</span>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- STEP 1: SERVIÇO -->
+    <div class="step-panel active" id="panel-1">
+      <p class="section-title">Qual serviço?</p>
+      <p class="section-sub">Escolha o que deseja fazer</p>
+      <div id="services-list">
+        <div class="loading"><div class="spinner"></div>Carregando serviços...</div>
       </div>
-      <h1 id="shop-name" class="font-display text-4xl tracking-wider gold">Carregando...</h1>
-      <p id="shop-address" class="text-gray-500 text-sm mt-1 hidden"></p>
     </div>
 
-    <!-- Indicador de passos -->
-    <div class="step-indicator mb-8 px-2">
-      <div class="step-dot active" id="step1-dot">1</div>
-      <div class="step-line"></div>
-      <div class="step-dot pending" id="step2-dot">2</div>
-      <div class="step-line"></div>
-      <div class="step-dot pending" id="step3-dot">3</div>
-      <div class="step-line"></div>
-      <div class="step-dot pending" id="step4-dot">4</div>
+    <!-- STEP 2: PROFISSIONAL -->
+    <div class="step-panel" id="panel-2">
+      <button class="btn-back" onclick="goStep(1)">← Voltar</button>
+      <p class="section-title">Qual profissional?</p>
+      <p class="section-sub">Escolha com quem quer ser atendido</p>
+      <div id="barbers-list"></div>
     </div>
 
-    <!-- ── ETAPA 1: Escolher serviço ── -->
-    <div id="step1" class="fade-in">
-      <div class="card p-6 mb-4">
-        <h2 class="font-semibold text-white mb-1">Qual serviço você quer?</h2>
-        <p class="text-xs text-gray-500 mb-5">Passo 1 de 4</p>
-        <div id="services-list" class="space-y-3">
-          <div class="text-center py-8 text-gray-500 text-sm">Carregando serviços...</div>
-        </div>
+    <!-- STEP 3: DATA E HORÁRIO -->
+    <div class="step-panel" id="panel-3">
+      <button class="btn-back" onclick="goStep(2)">← Voltar</button>
+      <p class="section-title">Quando?</p>
+      <p class="section-sub">Escolha o dia e horário disponível</p>
+
+      <div class="date-scroller" id="date-scroller"></div>
+
+      <div id="slots-container">
+        <div class="loading"><div class="spinner"></div>Selecione uma data</div>
       </div>
     </div>
 
-    <!-- ── ETAPA 2: Escolher barbeiro ── -->
-    <div id="step2" class="hidden fade-in">
-      <div class="card p-6 mb-4">
-        <h2 class="font-semibold text-white mb-1">Com qual profissional?</h2>
-        <p class="text-xs text-gray-500 mb-5">Passo 2 de 4</p>
-        <div id="barbers-list" class="space-y-3"></div>
+    <!-- STEP 4: DADOS DO CLIENTE -->
+    <div class="step-panel" id="panel-4">
+      <button class="btn-back" onclick="goStep(3)">← Voltar</button>
+      <p class="section-title">Seus dados</p>
+      <p class="section-sub">Confirme o agendamento</p>
+
+      <div class="summary-card" id="summary"></div>
+
+      <div class="form-group">
+        <label class="form-label">Nome completo *</label>
+        <input type="text" id="c-name" placeholder="Seu nome" class="form-input" autocomplete="name" />
       </div>
-      <button onclick="goToStep(1)" class="text-sm text-gray-500 hover:text-white transition-colors">← Voltar</button>
+      <div class="form-group">
+        <label class="form-label">WhatsApp / Telefone *</label>
+        <input type="tel" id="c-phone" placeholder="(11) 99999-9999" class="form-input" autocomplete="tel" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">E-mail (opcional)</label>
+        <input type="email" id="c-email" placeholder="seu@email.com" class="form-input" autocomplete="email" />
+      </div>
+
+      <button class="btn-primary" id="btn-confirm" onclick="confirmBooking()">
+        Confirmar Agendamento
+      </button>
     </div>
 
-    <!-- ── ETAPA 3: Escolher data e hora ── -->
-    <div id="step3" class="hidden fade-in">
-      <div class="card p-6 mb-4">
-        <h2 class="font-semibold text-white mb-1">Quando você quer vir?</h2>
-        <p class="text-xs text-gray-500 mb-5">Passo 3 de 4</p>
-        <div>
-          <label class="block text-xs text-gray-400 mb-2 uppercase tracking-wide">Data e Hora</label>
-          <input type="datetime-local" id="book-datetime" class="input-field"
-                 oninput="validateDateTime()" />
-          <p id="datetime-error" class="text-red-400 text-xs mt-2 hidden">Selecione uma data futura</p>
-        </div>
-        <button onclick="goToStep(4)" id="btn-step3-next"
-                class="btn-gold mt-5" disabled>
-          Continuar
+    <!-- SUCESSO -->
+    <div class="step-panel" id="panel-success">
+      <div class="success-page">
+        <div class="success-icon">✓</div>
+        <div class="success-title">AGENDADO!</div>
+        <p class="success-sub">Seu horário foi reservado com sucesso.</p>
+        <div class="summary-card" id="success-summary"></div>
+        <button class="btn-primary" onclick="location.reload()" style="margin-top:16px;">
+          Fazer outro agendamento
         </button>
-      </div>
-      <button onclick="goToStep(2)" class="text-sm text-gray-500 hover:text-white transition-colors">← Voltar</button>
-    </div>
-
-    <!-- ── ETAPA 4: Dados do cliente ── -->
-    <div id="step4" class="hidden fade-in">
-      <div class="card p-6 mb-4">
-        <h2 class="font-semibold text-white mb-1">Seus dados</h2>
-        <p class="text-xs text-gray-500 mb-5">Passo 4 de 4</p>
-
-        <!-- Resumo -->
-        <div class="p-4 rounded-xl mb-5 text-sm space-y-2" style="background:#1a1a1a;">
-          <div class="flex justify-between">
-            <span class="text-gray-400">Serviço</span>
-            <span class="text-white font-medium" id="summary-service">—</span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-gray-400">Profissional</span>
-            <span class="text-white" id="summary-barber">—</span>
-          </div>
-          <div class="flex justify-between">
-            <span class="text-gray-400">Data e hora</span>
-            <span class="text-white" id="summary-datetime">—</span>
-          </div>
-          <div class="flex justify-between pt-2 border-t" style="border-color:#2a2a2a;">
-            <span class="text-gray-400">Valor</span>
-            <span class="font-bold" style="color:#C9A84C;" id="summary-price">—</span>
-          </div>
-        </div>
-
-        <div class="space-y-4">
-          <div>
-            <label class="block text-xs text-gray-400 mb-1.5 uppercase tracking-wide">Seu Nome *</label>
-            <input type="text" id="client-name" required placeholder="Nome completo" class="input-field" />
-          </div>
-          <div>
-            <label class="block text-xs text-gray-400 mb-1.5 uppercase tracking-wide">Telefone *</label>
-            <input type="tel" id="client-phone" required placeholder="(11) 99999-9999" class="input-field" />
-          </div>
-          <div>
-            <label class="block text-xs text-gray-400 mb-1.5 uppercase tracking-wide">E-mail</label>
-            <input type="email" id="client-email" placeholder="Opcional" class="input-field" />
-          </div>
-          <button onclick="bookAppointment()" id="btn-book" class="btn-gold mt-2">
-            Confirmar Agendamento
-          </button>
-        </div>
-      </div>
-      <button onclick="goToStep(3)" class="text-sm text-gray-500 hover:text-white transition-colors">← Voltar</button>
-    </div>
-
-    <!-- ── SUCESSO ── -->
-    <div id="step-success" class="hidden fade-in text-center">
-      <div class="card p-10">
-        <div class="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"
-             style="background:rgba(52,211,153,0.1);">
-          <svg class="w-10 h-10" style="color:#34d399" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-          </svg>
-        </div>
-        <h2 class="font-display text-3xl tracking-wider mb-2" style="color:#34d399">AGENDADO!</h2>
-        <p class="text-gray-400 text-sm mb-6">Seu agendamento foi confirmado com sucesso.</p>
-        <div id="success-details" class="p-4 rounded-xl text-sm text-left space-y-2 mb-6"
-             style="background:#1a1a1a;"></div>
-        <button onclick="location.reload()" class="btn-gold">Fazer outro agendamento</button>
       </div>
     </div>
 
@@ -190,22 +322,20 @@
 
   <script src="js/api.js"></script>
   <script>
-    let shopData = null;
-    let selected = { service: null, barber: null, datetime: null };
+    const slug    = new URLSearchParams(window.location.search).get('slug');
+    let shopData  = null;
+    let selected  = { service: null, barber: null, date: null, slot: null };
+    let currentStep = 1;
 
-    // Lê o slug da URL: booking.html?slug=joaobarber
-    const slug = new URLSearchParams(window.location.search).get('slug');
-
+    // ── INIT ──
     async function init() {
-      if (!slug) {
-        document.getElementById('shop-name').textContent = 'Link inválido';
-        return;
-      }
+      if (!slug) { document.getElementById('shop-name').textContent = 'Link inválido'; return; }
       try {
         shopData = await API.publicInfo(slug);
         renderShopHeader();
         renderServices();
         renderBarbers();
+        buildDateScroller();
       } catch(e) {
         document.getElementById('shop-name').textContent = 'Barbearia não encontrada';
       }
@@ -216,136 +346,278 @@
       document.getElementById('shop-name').textContent = s.name;
       document.title = `Agendar — ${s.name}`;
       if (s.address) {
-        const el = document.getElementById('shop-address');
-        el.textContent = s.address;
-        el.classList.remove('hidden');
+        document.getElementById('shop-address').textContent = s.address;
       }
     }
 
+    // ── STEP 1: SERVIÇOS ──
     function renderServices() {
       const list = document.getElementById('services-list');
       if (!shopData.services.length) {
-        list.innerHTML = '<p class="text-gray-500 text-sm text-center py-4">Nenhum serviço disponível</p>';
+        list.innerHTML = '<div class="empty"><div class="empty-icon">✂️</div><p>Nenhum serviço disponível</p></div>';
         return;
       }
       list.innerHTML = shopData.services.map(s => `
-        <div class="select-card" onclick="selectService(${s.id})" id="service-${s.id}">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="font-medium text-white text-sm">${s.name}</p>
-              <p class="text-xs text-gray-500 mt-0.5">${s.duration} minutos</p>
-            </div>
-            <span class="font-bold text-sm" style="color:#C9A84C;">${formatCurrency(s.price)}</span>
+        <div class="select-card ${selected.service?.id === s.id ? 'selected' : ''}"
+             onclick="selectService(${s.id})">
+          <div class="select-card-icon" style="background:rgba(201,168,76,0.1);">✂️</div>
+          <div class="select-card-body">
+            <div class="select-card-title">${s.name}</div>
+            <div class="select-card-sub">${s.duration} min</div>
           </div>
-        </div>`).join('');
-    }
-
-    function renderBarbers() {
-      const list = document.getElementById('barbers-list');
-      if (!shopData.barbers.length) {
-        list.innerHTML = '<p class="text-gray-500 text-sm text-center py-4">Nenhum profissional disponível</p>';
-        return;
-      }
-      list.innerHTML = shopData.barbers.map(b => `
-        <div class="select-card" onclick="selectBarber(${b.id})" id="barber-${b.id}">
-          <div class="flex items-center gap-3">
-            <div class="w-9 h-9 rounded-xl flex items-center justify-center font-display text-lg"
-                 style="background:rgba(201,168,76,0.1); color:#C9A84C;">${b.name.charAt(0)}</div>
-            <div>
-              <p class="font-medium text-white text-sm">${b.name}</p>
-              ${b.specialty ? `<p class="text-xs text-gray-500">${b.specialty}</p>` : ''}
-            </div>
-          </div>
+          <div class="select-card-right">${formatCurrency(s.price)}</div>
         </div>`).join('');
     }
 
     function selectService(id) {
       selected.service = shopData.services.find(s => s.id === id);
-      document.querySelectorAll('[id^="service-"]').forEach(el => el.classList.remove('active'));
-      document.getElementById(`service-${id}`).classList.add('active');
-      setTimeout(() => goToStep(2), 300);
+      selected.barber  = null;
+      selected.date    = null;
+      selected.slot    = null;
+      renderServices();
+      setTimeout(() => goStep(2), 200);
+    }
+
+    // ── STEP 2: PROFISSIONAIS ──
+    function renderBarbers() {
+      const list = document.getElementById('barbers-list');
+      const colors = ['#C9A84C','#34d399','#a5b4fc','#fb923c','#f472b6'];
+      if (!shopData.barbers.length) {
+        list.innerHTML = '<div class="empty"><div class="empty-icon">👤</div><p>Nenhum profissional disponível</p></div>';
+        return;
+      }
+      list.innerHTML = shopData.barbers.map((b, i) => {
+        const color = colors[i % colors.length];
+        return `
+          <div class="select-card ${selected.barber?.id === b.id ? 'selected' : ''}"
+               onclick="selectBarber(${b.id})">
+            <div class="select-card-icon" style="background:${color}20; color:${color};">
+              ${b.name.charAt(0).toUpperCase()}
+            </div>
+            <div class="select-card-body">
+              <div class="select-card-title">${b.name}</div>
+              ${b.specialty ? `<div class="select-card-sub">${b.specialty}</div>` : ''}
+            </div>
+          </div>`;
+      }).join('');
     }
 
     function selectBarber(id) {
       selected.barber = shopData.barbers.find(b => b.id === id);
-      document.querySelectorAll('[id^="barber-"]').forEach(el => el.classList.remove('active'));
-      document.getElementById(`barber-${id}`).classList.add('active');
-      setTimeout(() => goToStep(3), 300);
+      selected.date   = null;
+      selected.slot   = null;
+      renderBarbers();
+      setTimeout(() => goStep(3), 200);
     }
 
-    function validateDateTime() {
-      const val = document.getElementById('book-datetime').value;
-      const btn = document.getElementById('btn-step3-next');
-      const err = document.getElementById('datetime-error');
-      if (val && new Date(val) > new Date()) {
-        selected.datetime = val;
-        btn.disabled = false;
-        err.classList.add('hidden');
-      } else {
-        btn.disabled = true;
-        if (val) err.classList.remove('hidden');
+    // ── STEP 3: DATA E HORÁRIOS ──
+    function buildDateScroller() {
+      const scroller = document.getElementById('date-scroller');
+      const days     = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+      const months   = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+      const today    = new Date();
+      let html = '';
+
+      for (let i = 0; i < 30; i++) {
+        const d   = new Date(today);
+        d.setDate(today.getDate() + i);
+        const iso = d.toISOString().split('T')[0];
+        const isToday = i === 0;
+        html += `
+          <div class="date-chip ${isToday ? 'today' : ''} ${selected.date === iso ? 'selected' : ''}"
+               id="date-${iso}" onclick="selectDate('${iso}')">
+            <div class="date-chip-weekday">${days[d.getDay()]}</div>
+            <div class="date-day">${d.getDate()}</div>
+            <div class="date-month">${months[d.getMonth()]}</div>
+          </div>`;
+      }
+      scroller.innerHTML = html;
+    }
+
+    async function selectDate(iso) {
+      selected.date = iso;
+      selected.slot = null;
+
+      // Atualiza visual das chips
+      document.querySelectorAll('.date-chip').forEach(el => el.classList.remove('selected'));
+      const chip = document.getElementById(`date-${iso}`);
+      if (chip) {
+        chip.classList.add('selected');
+        chip.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      }
+
+      // Busca slots disponíveis
+      const container = document.getElementById('slots-container');
+      container.innerHTML = '<div class="loading"><div class="spinner"></div>Buscando horários...</div>';
+
+      try {
+        const result = await API.getSlots({
+          barber_id:  selected.barber.id,
+          service_id: selected.service.id,
+          date:       iso,
+          slug:       slug,
+        });
+
+        if (!result.slots || !result.slots.length) {
+          container.innerHTML = `
+            <div class="empty">
+              <div class="empty-icon">😔</div>
+              <p>${result.message || 'Nenhum horário disponível neste dia'}</p>
+              <p style="font-size:12px; margin-top:6px;">Tente outro dia</p>
+            </div>`;
+          return;
+        }
+
+        container.innerHTML = `
+          <p style="font-size:12px; color:var(--muted); margin-bottom:12px;">
+            ${result.slots.length} horário${result.slots.length > 1 ? 's' : ''} disponível${result.slots.length > 1 ? 'is' : ''}
+          </p>
+          <div class="slots-grid">
+            ${result.slots.map(slot => `
+              <div class="slot-btn ${selected.slot?.time === slot.time ? 'selected' : ''}"
+                   id="slot-${slot.time.replace(':','-')}"
+                   onclick="selectSlot('${slot.time}', '${slot.datetime_local}')">
+                ${slot.time}
+              </div>`).join('')}
+          </div>`;
+      } catch(e) {
+        // Se não tem agenda configurada, mostra input manual
+        container.innerHTML = `
+          <div style="padding:16px; background:#1a1a1a; border-radius:12px; margin-bottom:16px;">
+            <p style="font-size:13px; color:#fbbf24; margin-bottom:12px;">
+              ⚠️ Profissional sem agenda configurada.<br>Digite o horário desejado:
+            </p>
+            <input type="time" id="manual-time" class="form-input"
+                   onchange="selectManualTime(this.value)" />
+          </div>`;
       }
     }
 
-    function goToStep(step) {
-      [1,2,3,4].forEach(i => {
-        const el = document.getElementById(`step${i}`);
-        if (el) el.classList.add('hidden');
-        const dot = document.getElementById(`step${i}-dot`);
-        if (dot) dot.className = `step-dot ${i < step ? 'done' : i === step ? 'active' : 'pending'}`;
-      });
-      const target = step <= 4 ? document.getElementById(`step${step}`) : null;
-      if (target) { target.classList.remove('hidden'); }
-
-      if (step === 4) fillSummary();
+    function selectSlot(time, datetimeLocal) {
+      selected.slot = { time, datetimeLocal };
+      document.querySelectorAll('.slot-btn').forEach(el => el.classList.remove('selected'));
+      const btn = document.getElementById(`slot-${time.replace(':','-')}`);
+      if (btn) btn.classList.add('selected');
+      setTimeout(() => goStep(4), 300);
     }
 
-    function fillSummary() {
-      document.getElementById('summary-service').textContent  = selected.service?.name || '—';
-      document.getElementById('summary-barber').textContent   = selected.barber?.name || '—';
-      document.getElementById('summary-price').textContent    = formatCurrency(selected.service?.price || 0);
-      const dt = new Date(selected.datetime);
-      document.getElementById('summary-datetime').textContent =
-        dt.toLocaleDateString('pt-BR') + ' às ' + dt.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
+    function selectManualTime(time) {
+      if (!time || !selected.date) return;
+      selected.slot = {
+        time,
+        datetimeLocal: `${selected.date}T${time}`
+      };
+      setTimeout(() => goStep(4), 200);
     }
 
-    async function bookAppointment() {
-      const name  = document.getElementById('client-name').value.trim();
-      const phone = document.getElementById('client-phone').value.trim();
-      const email = document.getElementById('client-email').value.trim();
+    // ── STEP 4: CONFIRMAÇÃO ──
+    function renderSummary(containerId) {
+      const d = new Date(selected.slot.datetimeLocal);
+      const dateStr = d.toLocaleDateString('pt-BR', { weekday:'long', day:'2-digit', month:'long' });
+      document.getElementById(containerId).innerHTML = `
+        <div class="summary-row">
+          <span class="summary-label">Serviço</span>
+          <span class="summary-value">${selected.service.name}</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Profissional</span>
+          <span class="summary-value">${selected.barber.name}</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Data</span>
+          <span class="summary-value">${dateStr}</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Horário</span>
+          <span class="summary-value">${selected.slot.time}</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Valor</span>
+          <span class="summary-value summary-price">${formatCurrency(selected.service.price)}</span>
+        </div>`;
+    }
 
-      if (!name || !phone) { showToast('Preencha nome e telefone', 'error'); return; }
+    async function confirmBooking() {
+      const name  = document.getElementById('c-name').value.trim();
+      const phone = document.getElementById('c-phone').value.trim();
+      const email = document.getElementById('c-email').value.trim();
 
-      const btn = document.getElementById('btn-book');
-      btn.textContent = 'Confirmando...'; btn.disabled = true;
+      if (!name)  { showToastMsg('Digite seu nome', 'error'); return; }
+      if (!phone) { showToastMsg('Digite seu telefone', 'error'); return; }
+
+      const btn = document.getElementById('btn-confirm');
+      btn.textContent = 'Confirmando...';
+      btn.disabled = true;
 
       try {
-        const result = await API.publicBook(slug, {
+        // Converte horário local para UTC para enviar à API
+        const localDt  = new Date(selected.slot.datetimeLocal);
+        const isoUtc   = new Date(localDt.getTime() + 3 * 60 * 60 * 1000).toISOString();
+
+        await API.publicBook(slug, {
           client_name:  name,
           client_phone: phone,
           client_email: email || null,
           barber_id:    selected.barber.id,
           service_id:   selected.service.id,
-          datetime:     new Date(selected.datetime).toISOString(),
+          datetime:     isoUtc,
         });
 
-        // Mostra tela de sucesso
-        [1,2,3,4].forEach(i => {
-          const el = document.getElementById(`step${i}`);
-          if (el) el.classList.add('hidden');
-        });
-        document.getElementById('step-success').classList.remove('hidden');
+        // Sucesso
+        renderSummary('success-summary');
+        goStep('success');
 
-        const dt = new Date(result.datetime);
-        document.getElementById('success-details').innerHTML = `
-          <div class="flex justify-between"><span class="text-gray-400">Serviço</span><span class="text-white">${result.service}</span></div>
-          <div class="flex justify-between"><span class="text-gray-400">Profissional</span><span class="text-white">${result.barber}</span></div>
-          <div class="flex justify-between"><span class="text-gray-400">Data</span><span class="text-white">${dt.toLocaleDateString('pt-BR')}</span></div>
-          <div class="flex justify-between"><span class="text-gray-400">Hora</span><span class="text-white">${dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</span></div>`;
       } catch(err) {
-        showToast(err.message, 'error');
-        btn.textContent = 'Confirmar Agendamento'; btn.disabled = false;
+        showToastMsg(err.message, 'error');
+        btn.textContent = 'Confirmar Agendamento';
+        btn.disabled = false;
       }
+    }
+
+    // ── NAVEGAÇÃO ──
+    function goStep(step) {
+      // Esconde todos os panels
+      document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+
+      if (step === 'success') {
+        document.getElementById('panel-success').classList.add('active');
+        updateStepsBar(5);
+        window.scrollTo(0,0);
+        return;
+      }
+
+      document.getElementById(`panel-${step}`).classList.add('active');
+      currentStep = step;
+      updateStepsBar(step);
+
+      if (step === 4) renderSummary('summary');
+      window.scrollTo(0,0);
+    }
+
+    function updateStepsBar(step) {
+      const labels = ['', 'Serviço', 'Profissional', 'Horário', 'Confirmar'];
+      for (let i = 1; i <= 4; i++) {
+        const num   = document.getElementById(`s${i}`);
+        const label = document.getElementById(`sl${i}`);
+        if (i < step)       { num.className = 'step-num done';    label.className = 'step-label'; }
+        else if (i === step){ num.className = 'step-num active';  label.className = 'step-label active'; }
+        else                { num.className = 'step-num pending'; label.className = 'step-label'; }
+      }
+    }
+
+    // ── UTILITÁRIOS ──
+    function formatCurrency(v) {
+      return new Intl.NumberFormat('pt-BR', { style:'currency', currency:'BRL' }).format(v);
+    }
+
+    function showToastMsg(msg, type) {
+      const existing = document.querySelector('.toast');
+      if (existing) existing.remove();
+      const t = document.createElement('div');
+      t.className = `toast${type === 'error' ? ' error' : ''}`;
+      t.textContent = msg;
+      document.body.appendChild(t);
+      setTimeout(() => { t.style.opacity='0'; t.style.transition='opacity 0.3s'; setTimeout(()=>t.remove(),300); }, 3000);
     }
 
     init();
