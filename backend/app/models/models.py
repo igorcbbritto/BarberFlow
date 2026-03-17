@@ -39,11 +39,12 @@ class Barbershop(Base):
     is_active  = Column(Boolean, default=True)
     created_at = Column(DateTime, default=utcnow)
 
-    users        = relationship("User", back_populates="barbershop")
-    barbers      = relationship("Barber", back_populates="barbershop")
-    services     = relationship("Service", back_populates="barbershop")
-    clients      = relationship("Client", back_populates="barbershop")
-    appointments = relationship("Appointment", back_populates="barbershop")
+    users        = relationship("User",         back_populates="barbershop")
+    barbers      = relationship("Barber",        back_populates="barbershop")
+    services     = relationship("Service",       back_populates="barbershop")
+    clients      = relationship("Client",        back_populates="barbershop")
+    appointments = relationship("Appointment",   back_populates="barbershop")
+    schedules    = relationship("BarberSchedule", back_populates="barbershop")  # ADICIONADO
 
 
 class User(Base):
@@ -69,8 +70,8 @@ class Barber(Base):
     barbershop_id = Column(Integer, ForeignKey("barbershops.id"), nullable=False)
     created_at    = Column(DateTime, default=utcnow)
 
-    barbershop   = relationship("Barbershop", back_populates="barbers")
-    appointments = relationship("Appointment", back_populates="barber")
+    barbershop   = relationship("Barbershop",    back_populates="barbers")
+    appointments = relationship("Appointment",   back_populates="barber")
     schedules    = relationship("BarberSchedule", back_populates="barber")
 
 
@@ -116,9 +117,9 @@ class Appointment(Base):
     created_at    = Column(DateTime, default=utcnow)
 
     barbershop = relationship("Barbershop", back_populates="appointments")
-    client     = relationship("Client", back_populates="appointments")
-    barber     = relationship("Barber", back_populates="appointments")
-    service    = relationship("Service", back_populates="appointments")
+    client     = relationship("Client",     back_populates="appointments")
+    barber     = relationship("Barber",     back_populates="appointments")
+    service    = relationship("Service",    back_populates="appointments")
 
 
 class BarberSchedule(Base):
@@ -132,5 +133,5 @@ class BarberSchedule(Base):
     end_time      = Column(String(5), nullable=False)  # "18:00"
     is_active     = Column(Boolean, default=True)
 
-    barber     = relationship("Barber", back_populates="schedules")
-    barbershop = relationship("Barbershop", foreign_keys=[barbershop_id])
+    barber     = relationship("Barber",      back_populates="schedules")
+    barbershop = relationship("Barbershop",  back_populates="schedules")  # CORRIGIDO: adicionado back_populates
