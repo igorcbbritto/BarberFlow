@@ -1,136 +1,73 @@
 """
-models/models.py
-Definição de todas as tabelas do banco de dados usando SQLAlchemy ORM.
+main.py
+Ponto de entrada da aplicação FastAPI.
 """
 
-from datetime import datetime, timezone
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Enum, Boolean, Text
-from sqlalchemy.orm import relationship
-import enum
+import os
+import sys
+import logging
 
-from app.database.connection import Base
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(message)s",
+    stream=sys.stdout
+)
+log = logging.getLogger(__name__)
 
+log.info("=== Iniciando BarberFlow API ===")
+log.info(f"Python: {sys.version}")
+log.info(f"DATABASE_URL configurada: {'SIM' if os.getenv('DATABASE_URL') else 'NAO'}")
 
-def utcnow():
-    return datetime.now(timezone.utc).replace(tzinfo=None)
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
+log.info("Importando modulos internos...")
 
-class AppointmentStatus(str, enum.Enum):
-    pending   = "pending"
-    confirmed = "confirmed"
-    completed = "completed"
-    cancelled = "cancelled"
+from app.database.connection import engine, Base
+from app.models import models
+from app.routers import auth, barbers, services, clients, appointments, dashboard, demo, schedules
 
+log.info("Criando tabelas no banco de dados...")
+try:
+    Base.metadata.create_all(bind=engine)
+    log.info("Tabelas criadas com sucesso!")
+except Exception as e:
+    log.error(f"ERRO ao criar tabelas: {e}")
+    raise
 
-class PlanType(str, enum.Enum):
-    free    = "free"
-    basic   = "basic"
-    premium = "premium"
+app = FastAPI(
+    title="BarberFlow API",
+    description="SaaS para gerenciamento de barbearias e salões de beleza",
+    version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+)
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-class Barbershop(Base):
-    __tablename__ = "barbershops"
-    id         = Column(Integer, primary_key=True, index=True)
-    name       = Column(String(100), nullable=False)
-    slug       = Column(String(50), unique=True, index=True)
-    phone      = Column(String(20), nullable=True)
-    address    = Column(String(200), nullable=True)
-    plan       = Column(Enum(PlanType), default=PlanType.free)
-    is_active  = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=utcnow)
+app.include_router(auth.router)
+app.include_router(barbers.router)
+app.include_router(services.router)
+app.include_router(clients.router)
+app.include_router(appointments.router)
+app.include_router(dashboard.router)
+app.include_router(demo.router)
+app.include_router(schedules.router)
 
-    users        = relationship("User", back_populates="barbershop")
-    barbers      = relationship("Barber", back_populates="barbershop")
-    services     = relationship("Service", back_populates="barbershop")
-    clients      = relationship("Client", back_populates="barbershop")
-    appointments = relationship("Appointment", back_populates="barbershop")
-
-
-class User(Base):
-    __tablename__ = "users"
-    id            = Column(Integer, primary_key=True, index=True)
-    name          = Column(String(100), nullable=False)
-    email         = Column(String(150), unique=True, index=True, nullable=False)
-    password_hash = Column(String(200), nullable=False)
-    barbershop_id = Column(Integer, ForeignKey("barbershops.id"), nullable=False)
-    is_active     = Column(Boolean, default=True)
-    created_at    = Column(DateTime, default=utcnow)
-
-    barbershop = relationship("Barbershop", back_populates="users")
-
-
-class Barber(Base):
-    __tablename__ = "barbers"
-    id            = Column(Integer, primary_key=True, index=True)
-    name          = Column(String(100), nullable=False)
-    phone         = Column(String(20), nullable=True)
-    specialty     = Column(String(100), nullable=True)
-    is_active     = Column(Boolean, default=True)
-    barbershop_id = Column(Integer, ForeignKey("barbershops.id"), nullable=False)
-    created_at    = Column(DateTime, default=utcnow)
-
-    barbershop   = relationship("Barbershop", back_populates="barbers")
-    appointments = relationship("Appointment", back_populates="barber")
-    schedules    = relationship("BarberSchedule", back_populates="barber")
+log.info("=== BarberFlow API pronta! ===")
 
 
-class Service(Base):
-    __tablename__ = "services"
-    id            = Column(Integer, primary_key=True, index=True)
-    name          = Column(String(100), nullable=False)
-    description   = Column(Text, nullable=True)
-    duration      = Column(Integer, nullable=False)
-    price         = Column(Float, nullable=False)
-    is_active     = Column(Boolean, default=True)
-    barbershop_id = Column(Integer, ForeignKey("barbershops.id"), nullable=False)
-    created_at    = Column(DateTime, default=utcnow)
-
-    barbershop   = relationship("Barbershop", back_populates="services")
-    appointments = relationship("Appointment", back_populates="service")
+@app.get("/", tags=["Health Check"])
+def root():
+    return {"status": "online", "app": "BarberFlow API", "version": "1.0.0", "docs": "/docs"}
 
 
-class Client(Base):
-    __tablename__ = "clients"
-    id            = Column(Integer, primary_key=True, index=True)
-    name          = Column(String(100), nullable=False)
-    phone         = Column(String(20), nullable=True)
-    email         = Column(String(150), nullable=True)
-    notes         = Column(Text, nullable=True)
-    barbershop_id = Column(Integer, ForeignKey("barbershops.id"), nullable=False)
-    created_at    = Column(DateTime, default=utcnow)
-
-    barbershop   = relationship("Barbershop", back_populates="clients")
-    appointments = relationship("Appointment", back_populates="client")
-
-
-class Appointment(Base):
-    __tablename__ = "appointments"
-    id            = Column(Integer, primary_key=True, index=True)
-    client_id     = Column(Integer, ForeignKey("clients.id"), nullable=False)
-    barber_id     = Column(Integer, ForeignKey("barbers.id"), nullable=False)
-    service_id    = Column(Integer, ForeignKey("services.id"), nullable=False)
-    barbershop_id = Column(Integer, ForeignKey("barbershops.id"), nullable=False)
-    datetime      = Column(DateTime, nullable=False)
-    status        = Column(Enum(AppointmentStatus), default=AppointmentStatus.confirmed)
-    notes         = Column(Text, nullable=True)
-    created_at    = Column(DateTime, default=utcnow)
-
-    barbershop = relationship("Barbershop", back_populates="appointments")
-    client     = relationship("Client", back_populates="appointments")
-    barber     = relationship("Barber", back_populates="appointments")
-    service    = relationship("Service", back_populates="appointments")
-
-
-class BarberSchedule(Base):
-    """Horários de trabalho por dia da semana. day_of_week: 0=Seg ... 6=Dom"""
-    __tablename__ = "barber_schedules"
-    id            = Column(Integer, primary_key=True, index=True)
-    barber_id     = Column(Integer, ForeignKey("barbers.id"), nullable=False)
-    barbershop_id = Column(Integer, ForeignKey("barbershops.id"), nullable=False)
-    day_of_week   = Column(Integer, nullable=False)
-    start_time    = Column(String(5), nullable=False)  # "08:00"
-    end_time      = Column(String(5), nullable=False)  # "18:00"
-    is_active     = Column(Boolean, default=True)
-
-    barber     = relationship("Barber", back_populates="schedules")
-    barbershop = relationship("Barbershop")
+@app.get("/health", tags=["Health Check"])
+def health():
+    return {"status": "healthy"}
