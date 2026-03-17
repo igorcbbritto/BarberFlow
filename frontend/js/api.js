@@ -76,7 +76,7 @@ const API = {
     register: (body) => apiRequest('POST', '/auth/register', body, false),
     
     // Dashboard
-    dashboard: () => apiRequest('GET', '/dashboard/'),
+    dashboard: (tzOffset) => apiRequest('GET', `/dashboard/${tzOffset !== undefined ? '?tz_offset='+tzOffset : ''}`),
     
     // Barbeiros
     getBarbers:    ()       => apiRequest('GET', '/barbers/'),
