@@ -9,16 +9,16 @@
 <body>
   <div id="app-layout"></div>
 
-  <div id="modal" class="modal-overlay hidden" onclick="closeModalOutside(event)">
+  <div id="modal" class="modal-overlay hidden">
     <div class="modal-box">
       <div class="flex items-center justify-between mb-6">
         <h3 id="modal-title" class="text-lg font-semibold text-white">Novo Serviço</h3>
-        <button onclick="closeModal()" class="text-gray-500 hover:text-white">✕</button>
+        <button type="button" onclick="closeModal()" class="text-gray-500 hover:text-white text-xl leading-none">&times;</button>
       </div>
-      <form onsubmit="saveService(event)" class="space-y-4">
+      <form id="modal-form" onsubmit="saveService(event)" class="space-y-4">
         <input type="hidden" id="edit-id" />
         <div>
-          <label class="block text-xs text-gray-400 mb-1.5 uppercase tracking-wide">Nome do Serviço *</label>
+          <label class="block text-xs text-gray-400 mb-1.5 uppercase tracking-wide">Nome *</label>
           <input type="text" id="f-name" required placeholder="Ex: Corte Masculino" class="input-field" />
         </div>
         <div>
@@ -27,7 +27,7 @@
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs text-gray-400 mb-1.5 uppercase tracking-wide">Duração (minutos) *</label>
+            <label class="block text-xs text-gray-400 mb-1.5 uppercase tracking-wide">Duração (min) *</label>
             <input type="number" id="f-duration" required min="5" placeholder="30" class="input-field" />
           </div>
           <div>
@@ -77,16 +77,11 @@
         if (!services.length) {
           table.innerHTML = `
             <div class="text-center py-20 text-gray-600">
-              <svg class="w-12 h-12 mx-auto mb-4 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <circle cx="6" cy="6" r="3" stroke-width="1.5"/><circle cx="6" cy="18" r="3" stroke-width="1.5"/>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 4L8.12 15.88M14.47 14.48L20 20M8.12 8.12L12 12"/>
-              </svg>
               <p class="text-sm mb-4">Nenhum serviço cadastrado</p>
               <button onclick="openModal()" class="btn-gold text-xs px-5 py-2">Adicionar serviço</button>
             </div>`;
           return;
         }
-
         table.innerHTML = `
           <div class="grid gap-4 px-5 py-3 text-xs text-gray-500 uppercase tracking-wider border-b"
                style="grid-template-columns: 1fr 2fr 100px 100px 80px; border-color:#1a1a1a;">
@@ -121,19 +116,23 @@
       }
     }
 
-    function openModal(data = null) {
+    function openModal(data) {
       document.getElementById('modal-title').textContent = data ? 'Editar Serviço' : 'Novo Serviço';
-      document.getElementById('edit-id').value       = data?.id || '';
-      document.getElementById('f-name').value        = data?.name || '';
-      document.getElementById('f-description').value = data?.description || '';
-      document.getElementById('f-duration').value    = data?.duration || '';
-      document.getElementById('f-price').value       = data?.price || '';
+      document.getElementById('edit-id').value       = data ? data.id : '';
+      document.getElementById('f-name').value        = data ? data.name : '';
+      document.getElementById('f-description').value = data ? (data.description || '') : '';
+      document.getElementById('f-duration').value    = data ? data.duration : '';
+      document.getElementById('f-price').value       = data ? data.price : '';
       document.getElementById('modal').classList.remove('hidden');
     }
 
     function editService(s) { openModal(s); }
-    function closeModal() { document.getElementById('modal').classList.add('hidden'); }
-    function closeModalOutside(e) { if (e.target.id === 'modal') closeModal(); }
+
+    function closeModal() {
+      document.getElementById('modal').classList.add('hidden');
+      document.getElementById('modal-form').reset();
+      document.getElementById('edit-id').value = '';
+    }
 
     async function saveService(e) {
       e.preventDefault();
