@@ -101,6 +101,7 @@ const API = {
     createAppointment:(body) => apiRequest('POST', '/appointments/', body),
     updateAppointment:(id,b) => apiRequest('PUT', `/appointments/${id}`, b),
     cancelAppointment:(id)  => apiRequest('DELETE', `/appointments/${id}`),
+    togglePayment:    (id)  => apiRequest('PATCH', `/appointments/${id}/payment`),
     
     // Agenda dos profissionais
     getSchedule:  (barberId)         => apiRequest('GET', `/schedules/${barberId}`),
