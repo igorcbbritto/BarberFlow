@@ -177,6 +177,19 @@ def seed_demo_data():
             )
             db.add(appointment)
 
+        # Agenda dos profissionais (Seg-Sab 08:00-18:00)
+        from app.models.models import BarberSchedule
+        for barber in barbers:
+            for day in range(6):  # 0=Seg até 5=Sab
+                db.add(BarberSchedule(
+                    barber_id=barber.id,
+                    barbershop_id=barbershop.id,
+                    day_of_week=day,
+                    start_time="08:00",
+                    end_time="18:00",
+                    is_active=True
+                ))
+
         db.commit()
 
         return {
