@@ -6,6 +6,7 @@ POST /auth/register  → Cria barbearia + usuário admin
 POST /auth/login     → Retorna token JWT
 """
 
+import os
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
@@ -118,11 +119,14 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
     
     # Gera token JWT
     token = create_access_token(data={"sub": str(user.id)})
-    
+
+    admin_email = os.getenv("ADMIN_EMAIL", "igor.c.b.britto@gmail.com")
+
     return TokenResponse(
         access_token=token,
         barbershop_id=barbershop.id,
         barbershop_name=barbershop.name,
         barbershop_slug=barbershop.slug,
         user_name=user.name,
+        is_admin=user.email == admin_email,
     )
