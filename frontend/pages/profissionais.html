@@ -9,12 +9,12 @@
 <body>
   <div id="app-layout"></div>
 
-  <!-- Modal -->
-  <div id="modal" class="modal-overlay hidden">
+  <!-- Modal Profissional -->
+  <div id="modal" class="modal-overlay">
     <div class="modal-box">
       <div class="flex items-center justify-between mb-6">
         <h3 id="modal-title" class="text-lg font-semibold text-white">Novo Profissional</h3>
-        <button type="button" onclick="closeModal()" class="text-gray-500 hover:text-white text-xl leading-none">&times;</button>
+        <button type="button" onclick="closeModal()" class="text-gray-500 hover:text-white text-2xl leading-none">&times;</button>
       </div>
       <form id="modal-form" onsubmit="saveBarber(event)" class="space-y-4">
         <input type="hidden" id="edit-id" />
@@ -40,14 +40,34 @@
     </div>
   </div>
 
+  <!-- Modal Agenda -->
+  <div id="modal-schedule" class="modal-overlay">
+    <div class="modal-box" style="max-width:560px;">
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="text-lg font-semibold text-white">Horários de Trabalho</h3>
+        <button type="button" onclick="closeScheduleModal()" class="text-gray-500 hover:text-white text-2xl leading-none">&times;</button>
+      </div>
+      <p id="schedule-barber-name" class="text-amber-400 text-sm mb-5"></p>
+
+      <div class="space-y-2" id="schedule-days"></div>
+
+      <div class="flex gap-3 pt-5">
+        <button onclick="saveSchedule()" class="btn-gold flex-1 py-2.5">Salvar Agenda</button>
+        <button type="button" onclick="closeScheduleModal()" class="btn-ghost px-6">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
   <script src="../js/api.js"></script>
   <script src="../js/layout.js"></script>
   <script>
     initLayout('profissionais');
 
+    const DAYS = ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'];
+    let currentBarberId = null;
+
     function renderPage() {
-      const content = document.getElementById('page-content');
-      content.innerHTML = `
+      document.getElementById('page-content').innerHTML = `
         <div class="fade-in">
           <div class="flex items-center justify-between mb-6">
             <div>
@@ -61,8 +81,8 @@
               Novo Profissional
             </button>
           </div>
-          <div id="barbers-grid" class="grid grid-cols-3 gap-5">
-            <div class="col-span-3 text-center py-14 text-gray-500 text-sm">Carregando...</div>
+          <div id="barbers-grid" class="grid grid-cols-1 gap-4" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));">
+            <div class="col-span-full text-center py-14 text-gray-500 text-sm">Carregando...</div>
           </div>
         </div>`;
       loadBarbers();
@@ -74,25 +94,31 @@
         const barbers = await API.getBarbers();
         if (!barbers.length) {
           grid.innerHTML = `
-            <div class="col-span-3 text-center py-20 text-gray-600">
+            <div class="col-span-full text-center py-20 text-gray-600">
               <p class="text-sm mb-4">Nenhum profissional cadastrado</p>
               <button onclick="openModal()" class="btn-gold text-xs px-5 py-2">Adicionar profissional</button>
             </div>`;
           return;
         }
+        const colors = ['#C9A84C','#34d399','#a5b4fc','#fb923c','#f472b6'];
         grid.innerHTML = barbers.map(b => {
-          const initial = b.name.charAt(0).toUpperCase();
-          const colors  = ['#C9A84C','#34d399','#a5b4fc','#fb923c','#f472b6'];
-          const color   = colors[b.id % colors.length];
+          const color = colors[b.id % colors.length];
           return `
-            <div class="card p-6 fade-in">
+            <div class="card p-5 fade-in">
               <div class="flex items-start justify-between mb-4">
-                <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-xl font-bold"
+                <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl font-bold flex-shrink-0"
                      style="background:${color}20; color:${color}; font-family:'Bebas Neue',cursive;">
-                  ${initial}
+                  ${b.name.charAt(0).toUpperCase()}
                 </div>
-                <div class="flex gap-2">
-                  <button onclick='editBarber(${JSON.stringify(b)})'
+                <div class="flex gap-1">
+                  <button onclick='openScheduleModal(${b.id}, "${b.name.replace(/"/g,"&quot;")}")'
+                          class="text-gray-500 hover:text-amber-400 transition-colors p-1.5" title="Configurar agenda">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                  </button>
+                  <button onclick='editBarber(${JSON.stringify(b).replace(/'/g,"&#39;")})'
                           class="text-gray-500 hover:text-white transition-colors p-1.5" title="Editar">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -109,15 +135,16 @@
                 </div>
               </div>
               <h3 class="text-white font-semibold text-base mb-1">${b.name}</h3>
-              ${b.specialty ? `<p class="text-xs text-gray-400 mb-3">${b.specialty}</p>` : '<p class="mb-3"></p>'}
-              ${b.phone ? `<div class="text-xs text-gray-500">${b.phone}</div>` : ''}
+              ${b.specialty ? `<p class="text-xs text-gray-400 mb-2">${b.specialty}</p>` : '<p class="mb-2"></p>'}
+              ${b.phone ? `<p class="text-xs text-gray-500">${b.phone}</p>` : ''}
             </div>`;
         }).join('');
       } catch(e) {
-        grid.innerHTML = `<div class="col-span-3 text-center py-10 text-red-400">${e.message}</div>`;
+        grid.innerHTML = `<div class="col-span-full text-center py-10 text-red-400">${e.message}</div>`;
       }
     }
 
+    // ── Modal Profissional ──
     function openModal(data) {
       document.getElementById('modal-title').textContent = data ? 'Editar Profissional' : 'Novo Profissional';
       document.getElementById('edit-id').value     = data ? data.id : '';
@@ -126,15 +153,12 @@
       document.getElementById('f-specialty').value = data ? (data.specialty || '') : '';
       document.getElementById('modal').classList.add('show');
     }
-
     function editBarber(b) { openModal(b); }
-
     function closeModal() {
       document.getElementById('modal').classList.remove('show');
       document.getElementById('modal-form').reset();
       document.getElementById('edit-id').value = '';
     }
-
     async function saveBarber(e) {
       e.preventDefault();
       const id = document.getElementById('edit-id').value;
@@ -146,17 +170,93 @@
       try {
         if (id) { await API.updateBarber(id, body); showToast('Profissional atualizado!'); }
         else    { await API.createBarber(body);      showToast('Profissional cadastrado!'); }
-        closeModal();
-        loadBarbers();
+        closeModal(); loadBarbers();
       } catch(err) { showToast(err.message, 'error'); }
     }
-
     async function deleteBarber(id) {
       if (!confirm('Desativar este profissional?')) return;
+      try { await API.deleteBarber(id); showToast('Desativado', 'info'); loadBarbers(); }
+      catch(err) { showToast(err.message, 'error'); }
+    }
+
+    // ── Modal Agenda ──
+    async function openScheduleModal(barberId, barberName) {
+      currentBarberId = barberId;
+      document.getElementById('schedule-barber-name').textContent = barberName;
+
+      // Busca agenda atual
+      let existingSchedules = [];
       try {
-        await API.deleteBarber(id);
-        showToast('Profissional desativado', 'info');
-        loadBarbers();
+        existingSchedules = await API.getSchedule(barberId);
+      } catch(e) {}
+
+      // Monta objeto por dia
+      const byDay = {};
+      existingSchedules.forEach(s => { byDay[s.day_of_week] = s; });
+
+      // Renderiza os 7 dias
+      document.getElementById('schedule-days').innerHTML = DAYS.map((day, i) => {
+        const existing = byDay[i];
+        const checked  = existing ? 'checked' : '';
+        const start    = existing ? existing.start_time : '08:00';
+        const end      = existing ? existing.end_time   : '18:00';
+        return `
+          <div class="flex items-center gap-3 p-3 rounded-xl" style="background:#1a1a1a;">
+            <label class="flex items-center gap-2 cursor-pointer min-w-[110px]">
+              <input type="checkbox" id="day-${i}" ${checked}
+                     onchange="toggleDay(${i})"
+                     class="w-4 h-4 rounded accent-amber-400" />
+              <span class="text-sm font-medium ${existing ? 'text-white' : 'text-gray-500'}" id="day-label-${i}">${day}</span>
+            </label>
+            <div id="day-times-${i}" class="flex items-center gap-2 ${existing ? '' : 'opacity-30 pointer-events-none'}">
+              <input type="time" id="start-${i}" value="${start}"
+                     class="input-field text-sm py-1.5" style="width:110px;" />
+              <span class="text-gray-500 text-sm">até</span>
+              <input type="time" id="end-${i}" value="${end}"
+                     class="input-field text-sm py-1.5" style="width:110px;" />
+            </div>
+          </div>`;
+      }).join('');
+
+      document.getElementById('modal-schedule').classList.add('show');
+    }
+
+    function toggleDay(i) {
+      const checked = document.getElementById(`day-${i}`).checked;
+      const times   = document.getElementById(`day-times-${i}`);
+      const label   = document.getElementById(`day-label-${i}`);
+      times.classList.toggle('opacity-30', !checked);
+      times.classList.toggle('pointer-events-none', !checked);
+      label.classList.toggle('text-white', checked);
+      label.classList.toggle('text-gray-500', !checked);
+    }
+
+    function closeScheduleModal() {
+      document.getElementById('modal-schedule').classList.remove('show');
+      currentBarberId = null;
+    }
+
+    async function saveSchedule() {
+      if (!currentBarberId) return;
+      const schedules = [];
+      for (let i = 0; i < 7; i++) {
+        const checked = document.getElementById(`day-${i}`)?.checked;
+        if (checked) {
+          schedules.push({
+            day_of_week: i,
+            start_time:  document.getElementById(`start-${i}`).value,
+            end_time:    document.getElementById(`end-${i}`).value,
+          });
+        }
+      }
+      if (!schedules.length) {
+        showToast('Selecione pelo menos um dia de trabalho', 'error');
+        return;
+      }
+      try {
+        await API.saveSchedule(currentBarberId, schedules);
+        showToast('Agenda salva com sucesso!');
+        closeScheduleModal();
       } catch(err) { showToast(err.message, 'error'); }
     }
 
