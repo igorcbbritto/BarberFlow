@@ -4,10 +4,8 @@ Definição de todas as tabelas do banco de dados usando SQLAlchemy ORM.
 """
 
 from datetime import datetime, timezone
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Float, Boolean, Enum
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Enum, Boolean, Text
 from sqlalchemy.orm import relationship
-from sqlalchemy.dialects.postgresql import JSON
-
 import enum
 
 from app.database.connection import Base
@@ -74,7 +72,6 @@ class Barber(Base):
     is_active     = Column(Boolean, default=True)
     barbershop_id = Column(Integer, ForeignKey("barbershops.id"), nullable=False)
     created_at    = Column(DateTime, default=utcnow)
-    working_hours = Column(JSON, nullable=True, default={})
 
     barbershop   = relationship("Barbershop", back_populates="barbers")
     appointments = relationship("Appointment", back_populates="barber")
