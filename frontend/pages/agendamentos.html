@@ -74,7 +74,9 @@
   <script>
     initLayout('agendamentos');
 
-    let allClients = [], allBarbers = [], allServices = [];
+    let allClients = [], allBarbers = [], allServices = [], allAppointments = [];
+    let selectedBarber = '';   // '' = todos os profissionais
+
     // Usa a data local do browser (não UTC) para o filtro
     function localTodayISO() {
       const now = new Date();
@@ -161,12 +163,18 @@
             </div>
           </div>
 
-          <div class="card p-4 mb-6 flex items-center gap-4">
+          <div class="card p-4 mb-6 flex flex-wrap items-center gap-4">
             <label class="text-xs text-gray-400 uppercase tracking-wide whitespace-nowrap">Filtrar por data:</label>
             <input type="date" id="date-picker" value="${selectedDate}"
                    onchange="changeDate(this.value)" class="input-field" style="width:auto;" />
             <button onclick="changeDate(localTodayISO())" class="btn-ghost text-xs px-3 py-2">Hoje</button>
-            <button onclick="changeDate('')"          class="btn-ghost text-xs px-3 py-2">Todos</button>
+            <button onclick="changeDate('')"              class="btn-ghost text-xs px-3 py-2">Todos</button>
+            <div class="h-5 border-l border-gray-700 hidden sm:block"></div>
+            <label class="text-xs text-gray-400 uppercase tracking-wide whitespace-nowrap">Profissional:</label>
+            <select id="barber-filter" onchange="changeBarber(this.value)" class="input-field" style="width:auto;">
+              <option value="">Todos</option>
+              ${allBarbers.map(b => `<option value="${b.id}">${b.name}</option>`).join('')}
+            </select>
           </div>
 
           <div class="card overflow-hidden" id="appointments-table">
@@ -182,14 +190,20 @@
         // Envia a data E o offset do fuso do browser (ex: -180 para Brasília UTC-3)
         // O backend usa isso para filtrar corretamente independente do fuso
         const offset = new Date().getTimezoneOffset(); // minutos atrás de UTC
-        const appointments = await API.getAppointments(selectedDate, offset);
-        renderTable(appointments);
+        const raw = await API.getAppointments(selectedDate, offset);
+        allAppointments = raw;
+        renderTable(raw);
       } catch(e) {
         table.innerHTML = `<div class="text-center py-10 text-red-400">${e.message}</div>`;
       }
     }
 
     function renderTable(appointments) {
+      // Aplica filtro de profissional (front-end, sem nova chamada à API)
+      const list = selectedBarber
+        ? appointments.filter(a => String(a.barber.id) === String(selectedBarber))
+        : appointments;
+
       const table = document.getElementById('appointments-table');
       const statusMap = {
         confirmed: ['badge-confirmed', 'Confirmado'],
@@ -198,7 +212,7 @@
         cancelled: ['badge-cancelled', 'Cancelado'],
       };
 
-      if (!appointments.length) {
+      if (!list.length) {
         table.innerHTML = `<div class="text-center py-16 text-gray-600"><p class="text-sm">Nenhum agendamento encontrado</p></div>`;
         return;
       }
@@ -209,7 +223,7 @@
           <div>Horário</div><div>Cliente</div><div>Profissional</div><div>Serviço</div>
           <div>Valor</div><div>Status</div><div>Ações</div>
         </div>
-        ${appointments.map(a => {
+        ${list.map(a => {
           const [cls, label] = statusMap[a.status] || ['badge-pending', a.status];
           const { time, date } = formatLocalTime(a.datetime);
           return `
@@ -254,6 +268,11 @@
       const dp = document.getElementById('date-picker');
       if (dp && date) dp.value = date;
       loadAppointments();
+    }
+
+    function changeBarber(barberId) {
+      selectedBarber = barberId;
+      renderTable(allAppointments);
     }
 
     function openModal(editData) {
