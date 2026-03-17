@@ -103,141 +103,71 @@
       <button onclick="goToStep(1)" class="text-sm text-gray-500 hover:text-white transition-colors">← Voltar</button>
     </div>
 
-   <!-- ── ETAPA 3: Escolher data e hora ── -->
-<div id="step3" class="hidden fade-in">
-  <div class="card p-6 mb-4">
-    <h2 class="font-semibold text-white mb-1">Quando você quer vir?</h2>
-    <p class="text-xs text-gray-500 mb-5">Passo 3 de 4</p>
-
-    <div>
-      <label class="block text-xs text-gray-400 mb-2 uppercase tracking-wide">Data</label>
-      <input type="date" id="book-date" class="input-field" />
-
-      <label class="block text-xs text-gray-400 mb-2 uppercase tracking-wide mt-4">Horário</label>
-      <div id="slots" class="flex flex-wrap gap-2"></div>
-
-      <p id="datetime-error" class="text-red-400 text-xs mt-2 hidden">Selecione uma data futura</p>
+    <!-- ── ETAPA 3: Escolher data e hora ── -->
+    <div id="step3" class="hidden fade-in">
+      <div class="card p-6 mb-4">
+        <h2 class="font-semibold text-white mb-1">Quando você quer vir?</h2>
+        <p class="text-xs text-gray-500 mb-5">Passo 3 de 4</p>
+        <div>
+          <label class="block text-xs text-gray-400 mb-2 uppercase tracking-wide">Data e Hora</label>
+          <input type="datetime-local" id="book-datetime" class="input-field"
+                 oninput="validateDateTime()" />
+          <p id="datetime-error" class="text-red-400 text-xs mt-2 hidden">Selecione uma data futura</p>
+        </div>
+        <button onclick="goToStep(4)" id="btn-step3-next"
+                class="btn-gold mt-5" disabled>
+          Continuar
+        </button>
+      </div>
+      <button onclick="goToStep(2)" class="text-sm text-gray-500 hover:text-white transition-colors">← Voltar</button>
     </div>
 
-    <button onclick="goToStep(4)" id="btn-step3-next"
-            class="btn-gold mt-5" disabled>
-      Continuar
-    </button>
-  </div>
-  <button onclick="goToStep(2)" class="text-sm text-gray-500 hover:text-white transition-colors">← Voltar</button>
-</div>
+    <!-- ── ETAPA 4: Dados do cliente ── -->
+    <div id="step4" class="hidden fade-in">
+      <div class="card p-6 mb-4">
+        <h2 class="font-semibold text-white mb-1">Seus dados</h2>
+        <p class="text-xs text-gray-500 mb-5">Passo 4 de 4</p>
 
-<!-- ── ETAPA 4: Dados do cliente ── -->
-<div id="step4" class="hidden fade-in">
-  <div class="card p-6 mb-4">
-    <h2 class="font-semibold text-white mb-1">Seus dados</h2>
-    <p class="text-xs text-gray-500 mb-5">Passo 4 de 4</p>
+        <!-- Resumo -->
+        <div class="p-4 rounded-xl mb-5 text-sm space-y-2" style="background:#1a1a1a;">
+          <div class="flex justify-between">
+            <span class="text-gray-400">Serviço</span>
+            <span class="text-white font-medium" id="summary-service">—</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-400">Profissional</span>
+            <span class="text-white" id="summary-barber">—</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-400">Data e hora</span>
+            <span class="text-white" id="summary-datetime">—</span>
+          </div>
+          <div class="flex justify-between pt-2 border-t" style="border-color:#2a2a2a;">
+            <span class="text-gray-400">Valor</span>
+            <span class="font-bold" style="color:#C9A84C;" id="summary-price">—</span>
+          </div>
+        </div>
 
-    <!-- Resumo -->
-    <div class="p-4 rounded-xl mb-5 text-sm space-y-2" style="background:#1a1a1a;">
-      <div class="flex justify-between">
-        <span class="text-gray-400">Serviço</span>
-        <span class="text-white font-medium" id="summary-service">—</span>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-xs text-gray-400 mb-1.5 uppercase tracking-wide">Seu Nome *</label>
+            <input type="text" id="client-name" required placeholder="Nome completo" class="input-field" />
+          </div>
+          <div>
+            <label class="block text-xs text-gray-400 mb-1.5 uppercase tracking-wide">Telefone *</label>
+            <input type="tel" id="client-phone" required placeholder="(11) 99999-9999" class="input-field" />
+          </div>
+          <div>
+            <label class="block text-xs text-gray-400 mb-1.5 uppercase tracking-wide">E-mail</label>
+            <input type="email" id="client-email" placeholder="Opcional" class="input-field" />
+          </div>
+          <button onclick="bookAppointment()" id="btn-book" class="btn-gold mt-2">
+            Confirmar Agendamento
+          </button>
+        </div>
       </div>
-      <div class="flex justify-between">
-        <span class="text-gray-400">Profissional</span>
-        <span class="text-white" id="summary-barber">—</span>
-      </div>
-      <div class="flex justify-between">
-        <span class="text-gray-400">Data e hora</span>
-        <span class="text-white" id="summary-datetime">—</span>
-      </div>
-      <div class="flex justify-between pt-2 border-t" style="border-color:#2a2a2a;">
-        <span class="text-gray-400">Valor</span>
-        <span class="font-bold" style="color:#C9A84C;" id="summary-price">—</span>
-      </div>
+      <button onclick="goToStep(3)" class="text-sm text-gray-500 hover:text-white transition-colors">← Voltar</button>
     </div>
-
-    <div class="space-y-4">
-      <div>
-        <label class="block text-xs text-gray-400 mb-1.5 uppercase tracking-wide">Seu Nome *</label>
-        <input type="text" id="client-name" required placeholder="Nome completo" class="input-field" />
-      </div>
-      <div>
-        <label class="block text-xs text-gray-400 mb-1.5 uppercase tracking-wide">Telefone *</label>
-        <input type="tel" id="client-phone" required placeholder="(11) 99999-9999" class="input-field" />
-      </div>
-      <div>
-        <label class="block text-xs text-gray-400 mb-1.5 uppercase tracking-wide">E-mail</label>
-        <input type="email" id="client-email" placeholder="Opcional" class="input-field" />
-      </div>
-      <button onclick="bookAppointment()" id="btn-book" class="btn-gold mt-2">
-        Confirmar Agendamento
-      </button>
-    </div>
-  </div>
-  <button onclick="goToStep(3)" class="text-sm text-gray-500 hover:text-white transition-colors">← Voltar</button>
-</div>
-
-<script>
-  const slug = "barbeariadobil";   // slug da barbearia
-  const barberId = 1;              // id do barbeiro
-  const serviceId = 2;             // id do serviço
-  let selectedSlot = null;
-  let selectedDate = null;
-
-  document.getElementById("book-date").addEventListener("change", async (e) => {
-    selectedDate = e.target.value;
-    if (!selectedDate) return;
-
-    const res = await fetch(`/appointments/public/${slug}/available?barber_id=${barberId}&service_id=${serviceId}&date=${selectedDate}`);
-    const data = await res.json();
-
-    const slotsDiv = document.getElementById("slots");
-    slotsDiv.innerHTML = "";
-
-    if (!data.availableSlots || data.availableSlots.length === 0) {
-      slotsDiv.innerHTML = "<p class='text-gray-400'>Nenhum horário disponível</p>";
-      document.getElementById("btn-step3-next").disabled = true;
-    } else {
-      data.availableSlots.forEach(slot => {
-        const btn = document.createElement("button");
-        btn.textContent = slot;
-        btn.className = "btn-gold px-3 py-1";
-        btn.onclick = () => {
-          selectedSlot = slot;
-          document.getElementById("btn-step3-next").disabled = false;
-          document.getElementById("summary-datetime").textContent = `${selectedDate} ${slot}`;
-          // destacar botão selecionado
-          [...slotsDiv.querySelectorAll("button")].forEach(b => b.classList.remove("bg-yellow-600"));
-          btn.classList.add("bg-yellow-600");
-        };
-        slotsDiv.appendChild(btn);
-      });
-    }
-  });
-
-  async function bookAppointment() {
-    const payload = {
-      client_name: document.getElementById("client-name").value,
-      client_phone: document.getElementById("client-phone").value,
-      client_email: document.getElementById("client-email").value,
-      barber_id: barberId,
-      service_id: serviceId,
-      date: selectedDate,
-      time: selectedSlot
-    };
-
-    const res = await fetch(`/appointments/public/${slug}/book`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-
-    if (res.status === 201) {
-      alert("Agendamento confirmado!");
-    } else if (res.status === 409) {
-      alert("Horário já reservado, escolha outro.");
-    } else {
-      alert("Erro ao reservar.");
-    }
-  }
-</script>
 
     <!-- ── SUCESSO ── -->
     <div id="step-success" class="hidden fade-in text-center">
