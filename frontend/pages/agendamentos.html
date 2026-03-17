@@ -120,17 +120,22 @@
         ]);
         populateSelects();
         renderPage();
-        async function loadAppointments() {
-  const table = document.getElementById('appointments-table');
-  if (!table) return;
-  try {
-    const offset = new Date().getTimezoneOffset();
-    const appointments = await API.getAppointments(selectedDate, offset);
-    renderTable(appointments);
-  } catch(e) {
-    table.innerHTML = `<div class="text-center py-10 text-red-400">${e.message}</div>`;
-  }
-}
+        loadAppointments();
+      } catch(e) { showToast(e.message, 'error'); }
+    }
+
+    function populateSelects() {
+      const populate = (id, items, labelFn) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.innerHTML = '<option value="">Selecione</option>' +
+          items.map(i => `<option value="${i.id}">${labelFn(i)}</option>`).join('');
+      };
+      populate('f-client',  allClients,  c => c.name);
+      populate('f-barber',  allBarbers,  b => b.name);
+      populate('f-service', allServices, s => `${s.name} — ${formatCurrency(s.price)}`);
+    }
+
     function renderPage() {
       document.getElementById('page-content').innerHTML = `
         <div class="fade-in">
@@ -174,7 +179,10 @@
       const table = document.getElementById('appointments-table');
       if (!table) return;
       try {
-        const appointments = await API.getAppointments(selectedDate);
+        // Envia a data E o offset do fuso do browser (ex: -180 para Brasília UTC-3)
+        // O backend usa isso para filtrar corretamente independente do fuso
+        const offset = new Date().getTimezoneOffset(); // minutos atrás de UTC
+        const appointments = await API.getAppointments(selectedDate, offset);
         renderTable(appointments);
       } catch(e) {
         table.innerHTML = `<div class="text-center py-10 text-red-400">${e.message}</div>`;
