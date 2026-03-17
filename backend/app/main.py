@@ -26,7 +26,7 @@ log.info("Importando modulos internos...")
 
 from app.database.connection import engine, Base
 from app.models import models
-from app.routers import auth, barbers, services, clients, appointments, dashboard, demo
+from app.routers import auth, barbers, services, clients, appointments, dashboard, demo, schedules, schedules, schedules
 
 log.info("Criando tabelas no banco de dados...")
 try:
@@ -60,6 +60,9 @@ app.include_router(clients.router)
 app.include_router(appointments.router)
 app.include_router(dashboard.router)
 app.include_router(demo.router)
+app.include_router(schedules.router)
+app.include_router(schedules.router)
+app.include_router(schedules.router)
 
 log.info("=== BarberFlow API pronta! ===")
 
