@@ -103,12 +103,16 @@
 
         <div>
           <label style="display:block; font-size:11px; color:#666; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.05em;">Dias de acesso</label>
-          <div style="display:flex; gap:8px; flex-wrap:wrap;" id="days-quick">
-            <button type="button" onclick="setDays(7)"  class="btn-ghost" id="d7">7 dias</button>
-            <button type="button" onclick="setDays(30)" class="btn-ghost" id="d30">30 dias</button>
-            <button type="button" onclick="setDays(90)" class="btn-ghost" id="d90">90 dias</button>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px;" id="days-quick">
+            <button type="button" onclick="setDays(7)"    class="btn-ghost" id="d7">7 dias</button>
+            <button type="button" onclick="setDays(30)"   class="btn-ghost" id="d30">30 dias</button>
+            <button type="button" onclick="setDays(90)"   class="btn-ghost" id="d90">90 dias</button>
+            <button type="button" onclick="setDays(0)"    class="btn-ghost" id="d0"
+                    style="border-color:#C9A84C; color:#C9A84C;">Vitalício</button>
           </div>
-          <input type="number" id="f-access-days" value="30" min="1" class="input-field" style="margin-top:8px;" placeholder="Ou digite o número de dias" />
+          <input type="number" id="f-access-days" value="30" min="1" class="input-field"
+                 placeholder="Ou digite o número de dias (0 = vitalício)" />
+          <p id="days-hint" style="font-size:11px; color:#555; margin-top:4px;"></p>
         </div>
 
         <div style="display:flex; gap:10px; padding-top:8px;">
@@ -131,8 +135,11 @@
         <button type="button" onclick="setAddDays(7)"  class="btn-ghost">+7 dias</button>
         <button type="button" onclick="setAddDays(30)" class="btn-ghost">+30 dias</button>
         <button type="button" onclick="setAddDays(90)" class="btn-ghost">+90 dias</button>
+        <button type="button" onclick="setAddDays(0)"  class="btn-ghost"
+                style="border-color:#C9A84C; color:#C9A84C;">Vitalício</button>
       </div>
-      <input type="number" id="f-add-days" value="30" min="1" class="input-field" style="margin-bottom:16px;" />
+      <input type="number" id="f-add-days" value="30" min="0" class="input-field" style="margin-bottom:4px;" />
+      <p id="add-days-hint" style="font-size:11px; color:#555; margin-bottom:12px;"></p>
       <input type="hidden" id="days-shop-id" />
       <div style="display:flex; gap:10px;">
         <button onclick="confirmAddDays()" class="btn-gold" style="flex:1; justify-content:center;">Confirmar</button>
@@ -247,15 +254,19 @@
 
     function setDays(n) {
       document.getElementById('f-access-days').value = n;
-      ['d7','d30','d90'].forEach(id => {
-        document.getElementById(id).style.borderColor = '';
-        document.getElementById(id).style.color = '';
+      ['d7','d30','d90','d0'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.style.borderColor = '';
+        el.style.color = '';
       });
-      const map = {7:'d7', 30:'d30', 90:'d90'};
-      if (map[n]) {
+      const map = {7:'d7', 30:'d30', 90:'d90', 0:'d0'};
+      if (map[n] !== undefined) {
         document.getElementById(map[n]).style.borderColor = '#C9A84C';
         document.getElementById(map[n]).style.color = '#C9A84C';
       }
+      const hint = document.getElementById('days-hint');
+      if (hint) hint.textContent = n === 0 ? '✓ Acesso vitalício — sem data de expiração' : '';
     }
 
     async function saveShop() {
@@ -264,7 +275,8 @@
       const oName    = document.getElementById('f-owner-name').value.trim();
       const oEmail   = document.getElementById('f-owner-email').value.trim();
       const oPass    = document.getElementById('f-owner-password').value.trim();
-      const days     = parseInt(document.getElementById('f-access-days').value) || 30;
+      const days = parseInt(document.getElementById('f-access-days').value);
+      const accessDays = isNaN(days) ? 30 : days;
 
       if (!name || !slug || !oName || !oEmail || !oPass) {
         showToast('Preencha todos os campos obrigatórios', 'error'); return;
@@ -274,7 +286,7 @@
         await req('POST', '/admin/barbershops', {
           name, slug,
           owner_name: oName, owner_email: oEmail, owner_password: oPass,
-          access_days: days,
+          access_days: accessDays === 0 ? null : accessDays,
         });
         showToast('Barbearia criada!');
         closeModal();
@@ -301,14 +313,21 @@
     }
 
     function closeDaysModal() { document.getElementById('modal-days').classList.remove('show'); }
-    function setAddDays(n) { document.getElementById('f-add-days').value = n; }
+    function setAddDays(n) {
+      document.getElementById('f-add-days').value = n;
+      const hint = document.getElementById('add-days-hint');
+      if (hint) hint.textContent = n === 0 ? '✓ Acesso vitalício — sem data de expiração' : '';
+    }
 
     async function confirmAddDays() {
       const id   = document.getElementById('days-shop-id').value;
-      const days = parseInt(document.getElementById('f-add-days').value) || 30;
+      const days = parseInt(document.getElementById('f-add-days').value);
+      const isVitalicio = days === 0 || isNaN(days);
       try {
-        await req('PATCH', `/admin/barbershops/${id}`, { access_days: days });
-        showToast(`+${days} dias adicionados!`);
+        await req('PATCH', `/admin/barbershops/${id}`, {
+          access_days: isVitalicio ? null : days
+        });
+        showToast(isVitalicio ? 'Acesso vitalício definido!' : `+${days} dias adicionados!`);
         closeDaysModal();
         load();
       } catch(e) { showToast(e.message, 'error'); }
