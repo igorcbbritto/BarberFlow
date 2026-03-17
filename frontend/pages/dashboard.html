@@ -53,6 +53,19 @@
                 ${statusBadge(a.status)}
                 <span class="text-amber-400 text-xs font-medium">${formatCurrency(a.service_price)}</span>
               </div>
+            </div>
+            <div class="table-row-mobile">
+              <div class="mobile-row-top">
+                <span class="font-semibold text-white text-base">${a.time}</span>
+                ${statusBadge(a.status)}
+              </div>
+              <div class="text-white text-sm font-medium">${a.client_name}</div>
+              <div class="mobile-row-mid">
+                <span class="text-gray-400 text-sm">${a.barber_name}</span>
+                <span class="text-gray-600">·</span>
+                <span class="text-gray-400 text-sm">${a.service_name}</span>
+                <span class="text-amber-400 text-sm font-medium">${formatCurrency(a.service_price)}</span>
+              </div>
             </div>`).join('')
         : `<div class="text-center py-14 text-gray-600">
              <svg class="w-10 h-10 mx-auto mb-3 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -66,7 +79,7 @@
         <div class="fade-in">
 
           <!-- Cabeçalho -->
-          <div class="flex items-center justify-between mb-8">
+          <div class="flex items-center justify-between mb-8 page-header">
             <div>
               <h1 class="font-display text-4xl tracking-wider gold">DASHBOARD</h1>
               <p class="text-gray-500 text-sm mt-1">${data.current_date} — Visão geral do dia</p>
@@ -81,7 +94,7 @@
           </div>
 
           <!-- Cards de métricas -->
-          <div class="grid grid-cols-3 gap-5 mb-8">
+          <div class="grid grid-cols-3 gap-5 mb-8 metrics-grid">
 
             <!-- Card: Agendamentos Hoje -->
             <div class="card p-6">
@@ -118,7 +131,7 @@
             </div>
 
             <!-- Card: Total Clientes -->
-            <div class="card p-6">
+            <div class="card p-6 metric-last">
               <div class="flex items-start justify-between">
                 <div>
                   <p class="text-xs text-gray-500 uppercase tracking-widest mb-2">Total de Clientes</p>
