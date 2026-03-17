@@ -79,10 +79,20 @@
 
     // Converte datetime UTC do servidor para input datetime-local (horário local do browser)
     function utcToLocal(isoString) {
-      const dt = new Date(isoString);
-      // Subtrai o offset do fuso local para obter o horário correto no input
-      const offset = dt.getTimezoneOffset() * 60000;
-      return new Date(dt.getTime() - offset).toISOString().slice(0, 16);
+      const dt = new Date(isoString + (isoString.endsWith('Z') ? '' : 'Z'));
+      // Formata no fuso local do usuário para o input datetime-local
+      const pad = n => String(n).padStart(2, '0');
+      return dt.getFullYear() + '-' +
+             pad(dt.getMonth() + 1) + '-' +
+             pad(dt.getDate()) + 'T' +
+             pad(dt.getHours()) + ':' +
+             pad(dt.getMinutes());
+    }
+
+    // Converte o valor do input datetime-local para ISO UTC para enviar à API
+    function localToUTC(dtLocalValue) {
+      // O new Date() interpreta o valor como local e converte para UTC automaticamente
+      return new Date(dtLocalValue).toISOString();
     }
 
     // Formata para exibição na tabela usando horário local do browser
