@@ -8,7 +8,7 @@ from fastapi import APIRouter
 from app.database.connection import SessionLocal, Base, engine
 from app.models.models import (
     Barbershop, User, Barber, Service, Client,
-    Appointment, AppointmentStatus, PlanType
+    Appointment, AppointmentStatus, PlanType, BarberSchedule  # ADICIONADO: BarberSchedule no import
 )
 from datetime import datetime, timezone, timedelta
 from passlib.context import CryptContext
@@ -29,6 +29,7 @@ def seed_demo_data():
         demo_shop = db.query(Barbershop).filter(Barbershop.slug == "barbearia-demo").first()
         if demo_shop:
             db.query(Appointment).filter(Appointment.barbershop_id == demo_shop.id).delete()
+            db.query(BarberSchedule).filter(BarberSchedule.barbershop_id == demo_shop.id).delete()  # ADICIONADO: deletar schedules ANTES de barbers
             db.query(Client).filter(Client.barbershop_id == demo_shop.id).delete()
             db.query(Service).filter(Service.barbershop_id == demo_shop.id).delete()
             db.query(Barber).filter(Barber.barbershop_id == demo_shop.id).delete()
@@ -169,7 +170,6 @@ def seed_demo_data():
         ]
 
         # (client_idx, barber_idx, day, hour, min, status)
-        service_cycle = [0, 1, 2, 3, 4, 5, 6, 7]
         for i, (ci, bi, day, hour, minute, status) in enumerate(appts):
             appointment = Appointment(
                 client_id=clients[ci % len(clients)].id,
@@ -182,7 +182,6 @@ def seed_demo_data():
             db.add(appointment)
 
         # Agenda dos profissionais (Seg-Sab 08:00-18:00)
-        from app.models.models import BarberSchedule
         for barber in barbers:
             for day in range(6):  # 0=Seg até 5=Sab
                 db.add(BarberSchedule(
