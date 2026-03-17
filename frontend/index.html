@@ -155,64 +155,39 @@
           </button>
         </form>
 
-        <!-- ── FORMULÁRIO DE CADASTRO ── -->
-        <form id="form-register" onsubmit="handleRegister(event)" class="space-y-4 hidden">
-
-          <div class="p-3 rounded-lg text-xs text-amber-400 mb-2"
-               style="background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.2);">
-            ✦ Crie sua conta e comece a usar gratuitamente
-          </div>
-
-          <div>
-            <label class="block text-xs text-gray-400 mb-1.5 tracking-wide uppercase">Nome da Barbearia</label>
-            <input type="text" id="reg-barbershop" required
-                   placeholder="Ex: Barbearia do João"
-                   class="input-field w-full px-4 py-3 rounded-lg text-sm" />
-          </div>
-
-          <div>
-            <label class="block text-xs text-gray-400 mb-1.5 tracking-wide uppercase">
-              Endereço do Link
-              <span class="text-gray-600 normal-case ml-1">(apenas letras e hífens)</span>
-            </label>
-            <div class="flex items-center gap-0">
-              <span class="px-3 py-3 text-xs rounded-l-lg text-gray-500"
-                    style="background: #1a1a1a; border: 1px solid #333; border-right: none;">
-                barberflow.com/
-              </span>
-              <input type="text" id="reg-slug" required
-                     placeholder="joaobarber"
-                     class="input-field flex-1 px-4 py-3 rounded-r-lg text-sm"
-                     oninput="this.value = this.value.toLowerCase().replace(/[^a-z0-9-]/g, '')" />
+        <!-- ── CADASTRO FECHADO ── -->
+        <div id="form-register" class="hidden">
+          <div class="text-center py-4">
+            <div class="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4"
+                 style="background: rgba(201,168,76,0.1);">
+              <svg class="w-7 h-7" style="color:#C9A84C;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                      d="M12 15v2m0 0v2m0-2h2m-2 0H10m2-5a5 5 0 100-10 5 5 0 000 10z"/>
+              </svg>
             </div>
-          </div>
+            <h3 class="font-semibold text-white text-base mb-2">Cadastros fechados</h3>
+            <p class="text-gray-500 text-sm leading-relaxed mb-6">
+              O BarberFlow está em acesso controlado.<br>
+              Entre em contato para contratar seu acesso.
+            </p>
 
-          <div>
-            <label class="block text-xs text-gray-400 mb-1.5 tracking-wide uppercase">Seu Nome</label>
-            <input type="text" id="reg-name" required
-                   placeholder="João Silva"
-                   class="input-field w-full px-4 py-3 rounded-lg text-sm" />
-          </div>
+            <a href="https://wa.me/5521999999999?text=Olá!%20Quero%20contratar%20o%20BarberFlow%20para%20minha%20barbearia."
+               target="_blank"
+               class="btn-gold w-full py-3 rounded-lg text-sm uppercase tracking-widest flex items-center justify-center gap-2 no-underline mb-3"
+               style="text-decoration:none;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+                <path d="M12 0C5.373 0 0 5.373 0 12c0 2.134.558 4.133 1.535 5.865L.057 23.57a.75.75 0 00.918.919l5.815-1.479A11.947 11.947 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.71 9.71 0 01-4.997-1.378l-.36-.214-3.716.945.975-3.63-.235-.374A9.712 9.712 0 012.25 12C2.25 6.615 6.615 2.25 12 2.25S21.75 6.615 21.75 12 17.385 21.75 12 21.75z"/>
+              </svg>
+              Falar no WhatsApp
+            </a>
 
-          <div>
-            <label class="block text-xs text-gray-400 mb-1.5 tracking-wide uppercase">E-mail</label>
-            <input type="email" id="reg-email" required
-                   placeholder="seu@email.com"
-                   class="input-field w-full px-4 py-3 rounded-lg text-sm" />
+            <p class="text-xs text-gray-600">
+              Ou envie um e-mail para
+              <a href="mailto:contato@barberflow.com" class="gold" style="text-decoration:none;">contato@barberflow.com</a>
+            </p>
           </div>
-
-          <div>
-            <label class="block text-xs text-gray-400 mb-1.5 tracking-wide uppercase">Senha</label>
-            <input type="password" id="reg-password" required
-                   placeholder="Mínimo 6 caracteres"
-                   class="input-field w-full px-4 py-3 rounded-lg text-sm" />
-          </div>
-
-          <button type="submit" id="btn-register"
-                  class="btn-gold w-full py-3 rounded-lg text-sm uppercase tracking-widest mt-2">
-            Criar Conta Grátis
-          </button>
-        </form>
+        </div>
 
       </div>
     </div>
