@@ -284,17 +284,23 @@
       }
 
       // O input datetime-local já está no horário local — o Date() converte para UTC automaticamente
+      const isoDatetime = new Date(dtValue).toISOString();
+
+      // Criação usa 'datetime', edição usa 'appointment_datetime' (evita conflito no backend)
       const body = {
         client_id:  parseInt(document.getElementById('f-client').value),
         barber_id:  parseInt(document.getElementById('f-barber').value),
         service_id: parseInt(document.getElementById('f-service').value),
-        datetime:   new Date(dtValue).toISOString(),
         notes:      document.getElementById('f-notes').value || null,
       };
 
-      // Status só é enviado na edição (update), não na criação
       if (id) {
+        // Edição
+        body.appointment_datetime = isoDatetime;
         body.status = document.getElementById('f-status').value;
+      } else {
+        // Criação
+        body.datetime = isoDatetime;
       }
 
       try {
