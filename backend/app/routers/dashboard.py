@@ -1,10 +1,12 @@
 """
 routers/dashboard.py
 Endpoint do dashboard com métricas do dia.
+Recebe tz_offset do frontend para filtrar pelo dia correto no fuso do usuário.
 """
 
 from datetime import datetime, timezone, timedelta
-from fastapi import APIRouter, Depends
+from typing import Optional
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func
 
@@ -17,13 +19,21 @@ router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
 
 @router.get("/")
 def get_dashboard(
+    tz_offset: Optional[int] = Query(None, description="Offset do fuso em minutos (ex: 180 para Brasília)"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    # Usa UTC para filtrar o dia — o frontend converte para horário local
-    now_utc = datetime.now(timezone.utc).replace(tzinfo=None)
-    today_start = now_utc.replace(hour=0, minute=0, second=0, microsecond=0)
-    today_end   = now_utc.replace(hour=23, minute=59, second=59, microsecond=999999)
+    # tz_offset vem do browser: getTimezoneOffset() — positivo = atrás de UTC
+    # Brasília = 180, então somamos 180 min ao UTC para achar o "hoje" local
+    offset_delta = timedelta(minutes=tz_offset if tz_offset is not None else 0)
+
+    # "Agora" no horário local do usuário
+    now_utc   = datetime.now(timezone.utc).replace(tzinfo=None)
+    now_local = now_utc - offset_delta  # subtrai porque tz_offset é positivo quando atrás
+
+    # Início e fim do dia local convertido para UTC (que é como está no banco)
+    today_start = now_local.replace(hour=0,  minute=0,  second=0,  microsecond=0)    + offset_delta
+    today_end   = now_local.replace(hour=23, minute=59, second=59, microsecond=999999) + offset_delta
 
     barbershop_id = current_user.barbershop_id
 
@@ -53,11 +63,14 @@ def get_dashboard(
         Client.barbershop_id == barbershop_id
     ).scalar()
 
+    # Formata horário para exibição já convertido para o fuso local
     appointments_list = []
     for a in today_appointments:
+        # Converte de UTC para horário local para exibir corretamente
+        local_dt = a.datetime - offset_delta
         appointments_list.append({
             "id": a.id,
-            "time": a.datetime.strftime("%H:%M"),
+            "time": local_dt.strftime("%H:%M"),
             "datetime_iso": a.datetime.isoformat(),
             "client_name": a.client.name if a.client else "—",
             "barber_name": a.barber.name if a.barber else "—",
@@ -71,6 +84,5 @@ def get_dashboard(
         "today_revenue": round(today_revenue, 2),
         "total_clients": total_clients,
         "today_appointments": appointments_list,
-        "current_date": now_utc.strftime("%d/%m/%Y"),
-        "server_utc_offset": 0,
+        "current_date": now_local.strftime("%d/%m/%Y"),
     }
