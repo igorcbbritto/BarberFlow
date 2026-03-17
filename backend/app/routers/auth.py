@@ -116,7 +116,22 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
     
     # Busca a barbearia do usuário
     barbershop = db.query(Barbershop).filter(Barbershop.id == user.barbershop_id).first()
-    
+
+    # Verifica se o acesso não está suspenso
+    if not barbershop.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acesso suspenso. Entre em contato para reativar."
+        )
+
+    # Verifica se o acesso não expirou (None = vitalício, sem bloqueio)
+    from datetime import datetime
+    if barbershop.expires_at and barbershop.expires_at < datetime.now():
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Seu acesso expirou. Entre em contato para renovar."
+        )
+
     # Gera token JWT
     token = create_access_token(data={"sub": str(user.id)})
 
