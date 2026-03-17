@@ -97,7 +97,7 @@ const API = {
     deleteClient:  (id)     => apiRequest('DELETE', `/clients/${id}`),
     
     // Agendamentos
-    getAppointments: (date) => apiRequest('GET', `/appointments/${date ? '?date_filter='+date : ''}`),
+    getAppointments: (date, tzOffset) => apiRequest('GET', `/appointments/${date ? '?date_filter='+date+(tzOffset !== undefined ? '&tz_offset='+tzOffset : '') : ''}`),
     createAppointment:(body) => apiRequest('POST', '/appointments/', body),
     updateAppointment:(id,b) => apiRequest('PUT', `/appointments/${id}`, b),
     cancelAppointment:(id)  => apiRequest('DELETE', `/appointments/${id}`),
