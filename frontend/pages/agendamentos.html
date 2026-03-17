@@ -49,6 +49,7 @@
         <div id="status-row">
           <label class="block text-xs text-gray-400 mb-1.5 uppercase tracking-wide">Status</label>
           <select id="f-status" class="input-field">
+            <option value="scheduled">Agendado</option>
             <option value="confirmed">Confirmado</option>
             <option value="pending">Pendente</option>
             <option value="completed">Concluído ✓</option>
@@ -204,6 +205,7 @@
 
       const table = document.getElementById('appointments-table');
       const statusMap = {
+        scheduled: ['badge-scheduled', 'Agendado'],
         confirmed: ['badge-confirmed', 'Confirmado'],
         pending:   ['badge-pending',   'Pendente'],
         completed: ['badge-completed', 'Concluído'],
@@ -224,12 +226,23 @@
         ${list.map(a => {
           const [cls, label] = statusMap[a.status] || ['badge-pending', a.status];
           const { time, date } = formatLocalTime(a.datetime);
+          const isCancelled = a.status === 'cancelled';
+          const isPaid = a.payment_status === 'paid';
           const actionsHTML = `
             <button onclick='editAppointment(${JSON.stringify(a).replace(/'/g,"&#39;")})'
                     class="text-gray-400 hover:text-amber-400 transition-colors" title="Editar">
               <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+              </svg>
+            </button>
+            ${!isCancelled ? `
+            <button onclick="togglePayment(${a.id})"
+                    class="transition-colors ${isPaid ? 'text-green-400 hover:text-green-300' : 'text-gray-400 hover:text-green-400'}" 
+                    title="${isPaid ? 'Marcar como não pago' : 'Marcar como pago'}">
+              <svg class="w-4 h-4" fill="${isPaid ? 'currentColor' : 'none'}" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
               </svg>
             </button>
             <button onclick="quickComplete(${a.id})"
@@ -243,7 +256,15 @@
               <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
               </svg>
-            </button>`;
+            </button>` : `
+            <button onclick="deleteAppointment(${a.id})"
+                    class="text-gray-500 hover:text-red-400 transition-colors" title="Excluir definitivamente">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+              </svg>
+            </button>`
+            }`;
           return `
             <div class="table-row grid gap-4 px-5 py-4 items-center"
                  style="grid-template-columns: 120px 1fr 1fr 1fr 90px 90px 90px;">
@@ -254,7 +275,10 @@
               <div class="text-gray-200 text-sm font-medium">${a.client.name}</div>
               <div class="text-gray-400 text-sm">${a.barber.name}</div>
               <div class="text-gray-400 text-sm">${a.service.name}</div>
-              <div class="text-amber-400 text-sm font-medium">${formatCurrency(a.service.price)}</div>
+              <div class="text-amber-400 text-sm font-medium">
+                ${formatCurrency(a.service.price)}
+                ${isPaid ? '<span class="ml-1 text-xs text-green-400">✓ pago</span>' : ''}
+              </div>
               <div><span class="${cls} text-xs px-2 py-0.5 rounded-full font-medium">${label}</span></div>
               <div class="flex gap-2">${actionsHTML}</div>
             </div>
@@ -272,6 +296,7 @@
                 <span class="text-gray-600 text-xs">·</span>
                 <span class="text-gray-400 text-xs">${a.service.name}</span>
                 <span class="text-amber-400 text-xs font-medium">${formatCurrency(a.service.price)}</span>
+                ${isPaid ? '<span class="text-green-400 text-xs">✓ pago</span>' : ''}
               </div>
               <div class="mobile-row-actions">${actionsHTML}</div>
             </div>`;
@@ -365,11 +390,38 @@
       } catch(err) { showToast(err.message, 'error'); }
     }
 
+    async function togglePayment(id) {
+      try {
+        await API.togglePayment(id);
+        showToast('Status de pagamento atualizado!', 'success');
+        renderTable(allAppointments.map(a =>
+          a.id === id
+            ? { ...a, payment_status: a.payment_status === 'paid' ? 'unpaid' : 'paid' }
+            : a
+        ));
+        // Atualiza o cache também
+        allAppointments = allAppointments.map(a =>
+          a.id === id
+            ? { ...a, payment_status: a.payment_status === 'paid' ? 'unpaid' : 'paid' }
+            : a
+        );
+      } catch(err) { showToast(err.message, 'error'); }
+    }
+
     async function cancelAppointment(id) {
       if (!confirm('Cancelar este agendamento?')) return;
       try {
         await API.cancelAppointment(id);
         showToast('Agendamento cancelado', 'info');
+        loadAppointments();
+      } catch(err) { showToast(err.message, 'error'); }
+    }
+
+    async function deleteAppointment(id) {
+      if (!confirm('Excluir este agendamento definitivamente? Esta ação não pode ser desfeita.')) return;
+      try {
+        await API.cancelAppointment(id);
+        showToast('Agendamento excluído', 'info');
         loadAppointments();
       } catch(err) { showToast(err.message, 'error'); }
     }
