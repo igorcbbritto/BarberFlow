@@ -48,16 +48,18 @@ def get_dashboard(
         Appointment.status != AppointmentStatus.cancelled
     ).order_by(Appointment.datetime).all()
 
-    completed_today = db.query(Appointment).options(
+    from app.models.models import PaymentStatus
+
+    paid_today = db.query(Appointment).options(
         joinedload(Appointment.service)
     ).filter(
         Appointment.barbershop_id == barbershop_id,
         Appointment.datetime >= today_start,
         Appointment.datetime <= today_end,
-        Appointment.status == AppointmentStatus.completed
+        Appointment.payment_status == PaymentStatus.paid
     ).all()
 
-    today_revenue = sum(a.service.price for a in completed_today if a.service)
+    today_revenue = sum(a.service.price for a in paid_today if a.service)
 
     total_clients = db.query(func.count(Client.id)).filter(
         Client.barbershop_id == barbershop_id
