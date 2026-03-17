@@ -41,14 +41,14 @@ class BarbershopCreateAdmin(BaseModel):
     owner_name: str
     owner_email: str
     owner_password: str
-    access_days: int = 30   # dias de acesso a partir de hoje
+    access_days: Optional[int] = 30   # None = vitalício, sem expiração
 
 
 class BarbershopUpdateAdmin(BaseModel):
     name: Optional[str] = None
     phone: Optional[str] = None
     is_active: Optional[bool] = None
-    access_days: Optional[int] = None   # adiciona N dias a partir de hoje
+    access_days: Optional[int] = None   # None = não alterar, 0 = vitalício, N = adicionar N dias
 
 
 # ── Helpers ──
@@ -112,7 +112,10 @@ def create_barbershop(
     if db.query(User).filter(User.email == data.owner_email).first():
         raise HTTPException(status_code=400, detail="Este e-mail já está cadastrado")
 
-    expires_at = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(days=data.access_days)
+    # None = vitalício (sem expiração), número = dias a partir de hoje
+    expires_at = None
+    if data.access_days is not None and data.access_days > 0:
+        expires_at = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(days=data.access_days)
 
     shop = Barbershop(
         name=data.name,
@@ -159,10 +162,14 @@ def update_barbershop(
     if data.is_active is not None:
         shop.is_active = data.is_active
     if data.access_days is not None:
-        # Adiciona dias a partir de hoje (ou da expiração atual se ainda válida)
-        now = datetime.now(timezone.utc).replace(tzinfo=None)
-        base = max(shop.expires_at or now, now)
-        shop.expires_at = base + timedelta(days=data.access_days)
+        if data.access_days == 0:
+            # 0 = vitalício, remove expiração
+            shop.expires_at = None
+        else:
+            # Adiciona dias a partir de hoje (ou da expiração atual se ainda válida)
+            now = datetime.now(timezone.utc).replace(tzinfo=None)
+            base = max(shop.expires_at or now, now)
+            shop.expires_at = base + timedelta(days=data.access_days)
 
     db.commit()
     return _format_shop(shop, db)
