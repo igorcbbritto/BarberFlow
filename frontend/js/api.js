@@ -102,6 +102,11 @@ const API = {
     updateAppointment:(id,b) => apiRequest('PUT', `/appointments/${id}`, b),
     cancelAppointment:(id)  => apiRequest('DELETE', `/appointments/${id}`),
     
+    // Agenda dos profissionais
+    getSchedule:  (barberId)         => apiRequest('GET', `/schedules/${barberId}`),
+    saveSchedule: (barberId, body)   => apiRequest('POST', `/schedules/${barberId}`, body),
+    getSlots:     (params)           => apiRequest('GET', `/schedules/public/slots?${new URLSearchParams(params)}`, null, false),
+
     // Público (sem auth)
     publicInfo: (slug)      => apiRequest('GET', `/appointments/public/${slug}/info`, null, false),
     publicBook: (slug, body) => apiRequest('POST', `/appointments/public/${slug}/book`, body, false),
