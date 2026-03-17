@@ -5,7 +5,7 @@
  */
 
 // URL base da API - troque em produção
-const API_BASE = window.API_URL || 'https://barberflow-api-0o7n.onrender.com';
+https://barberflow-app.pages.dev
 
 // ─────────────────────────────────────────────
 // AUTH: Salva e lê dados do usuário logado
