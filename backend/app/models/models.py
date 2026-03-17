@@ -43,6 +43,7 @@ class Barbershop(Base):
     address    = Column(String(200), nullable=True)
     plan       = Column(Enum(PlanType), default=PlanType.free)
     is_active  = Column(Boolean, default=True)
+    expires_at = Column(DateTime, nullable=True)   # None = sem expiração
     created_at = Column(DateTime, default=utcnow)
 
     users        = relationship("User",         back_populates="barbershop")
