@@ -133,4 +133,4 @@ class BarberSchedule(Base):
     is_active     = Column(Boolean, default=True)
 
     barber     = relationship("Barber", back_populates="schedules")
-    barbershop = relationship("Barbershop")
+    barbershop = relationship("Barbershop", foreign_keys=[barbershop_id])
