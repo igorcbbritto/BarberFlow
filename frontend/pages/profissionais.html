@@ -69,7 +69,7 @@
     function renderPage() {
       document.getElementById('page-content').innerHTML = `
         <div class="fade-in">
-          <div class="flex items-center justify-between mb-6 page-header">
+          <div class="flex items-center justify-between mb-6">
             <div>
               <h1 class="font-display text-4xl tracking-wider gold">PROFISSIONAIS</h1>
               <p class="text-gray-500 text-sm mt-1">Equipe da barbearia</p>
@@ -223,12 +223,23 @@
 
     function toggleDay(i) {
       const checked = document.getElementById(`day-${i}`).checked;
-      const times   = document.getElementById(`day-times-${i}`);
-      const label   = document.getElementById(`day-label-${i}`);
-      times.classList.toggle('opacity-30', !checked);
-      times.classList.toggle('pointer-events-none', !checked);
+      ['day-times-', 'day-breaks-'].forEach(prefix => {
+        const el = document.getElementById(`${prefix}${i}`);
+        if (el) {
+          el.classList.toggle('opacity-30', !checked);
+          el.classList.toggle('pointer-events-none', !checked);
+        }
+      });
+      const label = document.getElementById(`day-label-${i}`);
       label.classList.toggle('text-white', checked);
       label.classList.toggle('text-gray-500', !checked);
+    }
+
+    function toggleBreak(i, n) {
+      const checked = document.getElementById(`b${n}-${i}`).checked;
+      const el = document.getElementById(`b${n}-times-${i}`);
+      el.classList.toggle('opacity-30', !checked);
+      el.classList.toggle('pointer-events-none', !checked);
     }
 
     function closeScheduleModal() {
@@ -242,10 +253,16 @@
       for (let i = 0; i < 7; i++) {
         const checked = document.getElementById(`day-${i}`)?.checked;
         if (checked) {
+          const hasB1 = document.getElementById(`b1-${i}`)?.checked;
+          const hasB2 = document.getElementById(`b2-${i}`)?.checked;
           schedules.push({
-            day_of_week: i,
-            start_time:  document.getElementById(`start-${i}`).value,
-            end_time:    document.getElementById(`end-${i}`).value,
+            day_of_week:  i,
+            start_time:   document.getElementById(`start-${i}`).value,
+            end_time:     document.getElementById(`end-${i}`).value,
+            break1_start: hasB1 ? document.getElementById(`b1s-${i}`).value : null,
+            break1_end:   hasB1 ? document.getElementById(`b1e-${i}`).value : null,
+            break2_start: hasB2 ? document.getElementById(`b2s-${i}`).value : null,
+            break2_end:   hasB2 ? document.getElementById(`b2e-${i}`).value : null,
           });
         }
       }
