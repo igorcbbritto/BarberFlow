@@ -12,6 +12,7 @@ function initLayout(activePage) {
     { id: 'clientes',      label: 'Clientes',      href: 'clientes.html',     icon: usersIcon()     },
     { id: 'profissionais', label: 'Profissionais', href: 'profissionais.html',icon: personIcon()    },
     { id: 'servicos',      label: 'Serviços',      href: 'servicos.html',     icon: scissorsIcon()  },
+    { id: 'configuracoes', label: 'Configurações', href: 'configuracoes.html', icon: settingsIcon()  },
   ];
 
   const navItems = nav.map(item => {
@@ -36,12 +37,14 @@ function initLayout(activePage) {
 
       <!-- ── SIDEBAR ── -->
       <aside id="sidebar" class="sidebar">
-        <div class="flex items-center gap-3 px-6 py-6 border-b" style="border-color:#1e1e1e;">
-          <svg width="28" height="28" viewBox="0 0 36 36" fill="none">
-            <circle cx="18" cy="18" r="18" fill="#C9A84C" opacity="0.15"/>
-            <path d="M10 10 L20 20 M26 10 L16 20 M14 22 a4 4 0 1 0 4 4 M22 22 a4 4 0 1 0 4 4"
-                  stroke="#C9A84C" stroke-width="1.8" stroke-linecap="round"/>
-          </svg>
+        <div class="flex items-center gap-3 px-5 py-5 border-b" style="border-color:#1e1e1e;">
+          <div id="sidebar-logo" class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+               style="background:rgba(201,168,76,0.1);">
+            <svg width="20" height="20" viewBox="0 0 36 36" fill="none">
+              <path d="M10 10 L20 20 M26 10 L16 20 M14 22 a4 4 0 1 0 4 4 M22 22 a4 4 0 1 0 4 4"
+                    stroke="#C9A84C" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
           <span class="font-display text-2xl tracking-widest gold">BARBERFLOW</span>
         </div>
 
@@ -93,7 +96,16 @@ function initLayout(activePage) {
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
             </svg>
           </button>
-          <span class="font-display text-xl tracking-widest gold">BARBERFLOW</span>
+          <div class="flex items-center gap-2">
+            <div id="mobile-logo" class="w-7 h-7 rounded-lg flex items-center justify-center"
+                 style="background:rgba(201,168,76,0.1);">
+              <svg width="14" height="14" viewBox="0 0 36 36" fill="none">
+                <path d="M10 10 L20 20 M26 10 L16 20 M14 22 a4 4 0 1 0 4 4 M22 22 a4 4 0 1 0 4 4"
+                      stroke="#C9A84C" stroke-width="2.5" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <span class="font-display text-xl tracking-widest gold">BARBERFLOW</span>
+          </div>
           <button onclick="Auth.logout()" class="menu-btn" style="color:#71717a;">
             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -112,6 +124,24 @@ function initLayout(activePage) {
   const uname = Auth.getUserName() || '';
   const avatar = document.getElementById('user-avatar');
   if (avatar && uname) avatar.textContent = uname.charAt(0).toUpperCase();
+
+  // Carrega logo da barbearia no sidebar (assíncrono, sem bloquear)
+  loadSidebarLogo();
+}
+
+async function loadSidebarLogo() {
+  try {
+    const profile = await API.getProfile();
+    const logoUrl = profile?.barbershop?.logo_url;
+    if (!logoUrl) return;
+    // Atualiza sidebar desktop e header mobile
+    ['sidebar-logo', 'mobile-logo'].forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const size = id === 'mobile-logo' ? '14' : '20';
+      el.innerHTML = '<img src="' + logoUrl + '" style="width:100%;height:100%;border-radius:10px;object-fit:cover;" onerror="this.style.display='none'" />';
+    });
+  } catch(e) { /* silencioso */ }
 }
 
 function openMobileMenu() {
@@ -127,6 +157,13 @@ function closeMobileMenu() {
 }
 
 // ── ÍCONES ──
+function settingsIcon() {
+  return \`<svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+  </svg>\`;
+}
 function dashboardIcon() {
   return `<svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -263,7 +300,6 @@ function scissorsIcon() {
     .btn-ghost:hover { border-color: #444; color: #ccc; }
 
     /* ── BADGES ── */
-    .badge-scheduled { background: rgba(99,179,237,0.15);  color: #63b3ed; border: 1px solid rgba(99,179,237,0.2); }
     .badge-confirmed { background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.2); }
     .badge-pending   { background: rgba(245,158,11,0.15);  color: #fbbf24; border: 1px solid rgba(245,158,11,0.2); }
     .badge-completed { background: rgba(99,102,241,0.15);  color: #a5b4fc; border: 1px solid rgba(99,102,241,0.2); }
@@ -306,25 +342,6 @@ function scissorsIcon() {
       .grid-responsive { grid-template-columns: 1fr !important; }
       .hide-mobile { display: none !important; }
       h1.font-display { font-size: 2rem !important; }
-      .page-header { flex-direction: column !important; align-items: flex-start !important; gap: 12px !important; }
-      .page-header .btn-gold, .page-header .btn-ghost, .page-header a.btn-gold { width: 100% !important; justify-content: center; box-sizing: border-box; }
-      .filters-bar { flex-wrap: wrap !important; gap: 8px !important; }
-      .filters-bar input[type="date"], .filters-bar select { width: 100% !important; }
-      .filters-bar .divider { display: none !important; }
-      .table-header-row { display: none !important; }
-      .table-row { display: none !important; }
-      .table-row-mobile { display: flex !important; flex-direction: column; gap: 6px; padding: 14px 16px !important; border-bottom: 1px solid #1a1a1a; }
-      .table-row-mobile:last-child { border-bottom: none; }
-      .mobile-row-top { display: flex; justify-content: space-between; align-items: flex-start; }
-      .mobile-row-mid { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 2px; }
-      .mobile-row-actions { display: flex; gap: 14px; padding-top: 6px; border-top: 1px solid #1e1e1e; margin-top: 4px; }
-      .metrics-grid { grid-template-columns: repeat(2, 1fr) !important; }
-      .metrics-grid .metric-last { grid-column: span 2; }
-      .schedule-day { flex-wrap: wrap !important; }
-      .schedule-times { width: 100% !important; padding-left: 28px !important; margin-top: 6px; }
-    }
-    @media (min-width: 769px) {
-      .table-row-mobile { display: none !important; }
     }
   `;
   document.head.appendChild(style);
