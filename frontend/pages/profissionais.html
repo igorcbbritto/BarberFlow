@@ -194,26 +194,61 @@
       const byDay = {};
       existingSchedules.forEach(s => { byDay[s.day_of_week] = s; });
 
-      // Renderiza os 7 dias
+      // Renderiza os 7 dias com suporte a intervalos
       document.getElementById('schedule-days').innerHTML = DAYS.map((day, i) => {
-        const existing = byDay[i];
-        const checked  = existing ? 'checked' : '';
-        const start    = existing ? existing.start_time : '08:00';
-        const end      = existing ? existing.end_time   : '18:00';
+        const e       = byDay[i];
+        const checked = e ? 'checked' : '';
+        const start   = e ? e.start_time : '08:00';
+        const end     = e ? e.end_time   : '18:00';
+        const b1s     = e && e.break1_start ? e.break1_start : '12:00';
+        const b1e     = e && e.break1_end   ? e.break1_end   : '13:00';
+        const b2s     = e && e.break2_start ? e.break2_start : '15:30';
+        const b2e     = e && e.break2_end   ? e.break2_end   : '15:50';
+        const hasB1   = e && e.break1_start && e.break1_end;
+        const hasB2   = e && e.break2_start && e.break2_end;
+        const active  = e ? '' : 'opacity-30 pointer-events-none';
         return `
-          <div class="flex items-center gap-3 p-3 rounded-xl" style="background:#1a1a1a;">
-            <label class="flex items-center gap-2 cursor-pointer min-w-[110px]">
-              <input type="checkbox" id="day-${i}" ${checked}
-                     onchange="toggleDay(${i})"
-                     class="w-4 h-4 rounded accent-amber-400" />
-              <span class="text-sm font-medium ${existing ? 'text-white' : 'text-gray-500'}" id="day-label-${i}">${day}</span>
-            </label>
-            <div id="day-times-${i}" class="flex items-center gap-2 ${existing ? '' : 'opacity-30 pointer-events-none'}">
-              <input type="time" id="start-${i}" value="${start}"
-                     class="input-field text-sm py-1.5" style="width:110px;" />
-              <span class="text-gray-500 text-sm">até</span>
-              <input type="time" id="end-${i}" value="${end}"
-                     class="input-field text-sm py-1.5" style="width:110px;" />
+          <div class="p-3 rounded-xl space-y-2" style="background:#1a1a1a;">
+            <div class="flex items-center gap-3 schedule-day">
+              <label class="flex items-center gap-2 cursor-pointer" style="min-width:110px;">
+                <input type="checkbox" id="day-${i}" ${checked}
+                       onchange="toggleDay(${i})"
+                       class="w-4 h-4 rounded accent-amber-400" />
+                <span class="text-sm font-medium ${e ? 'text-white' : 'text-gray-500'}" id="day-label-${i}">${day}</span>
+              </label>
+              <div id="day-times-${i}" class="flex items-center gap-2 schedule-times ${active}">
+                <input type="time" id="start-${i}" value="${start}" class="input-field text-sm py-1.5" style="width:100px;" />
+                <span class="text-gray-500 text-xs">até</span>
+                <input type="time" id="end-${i}" value="${end}" class="input-field text-sm py-1.5" style="width:100px;" />
+              </div>
+            </div>
+            <div id="day-breaks-${i}" class="${active} pl-2 space-y-1.5">
+              <div class="flex items-center gap-2">
+                <label class="flex items-center gap-1.5 cursor-pointer" style="min-width:110px;">
+                  <input type="checkbox" id="b1-${i}" ${hasB1 ? 'checked' : ''}
+                         onchange="toggleBreak(${i},1)"
+                         class="w-3.5 h-3.5 accent-amber-400" />
+                  <span class="text-xs text-gray-400">🍽 Almoço</span>
+                </label>
+                <div id="b1-times-${i}" class="flex items-center gap-1 ${hasB1 ? '' : 'opacity-30 pointer-events-none'}">
+                  <input type="time" id="b1s-${i}" value="${b1s}" class="input-field text-xs py-1" style="width:88px;" />
+                  <span class="text-gray-600 text-xs">–</span>
+                  <input type="time" id="b1e-${i}" value="${b1e}" class="input-field text-xs py-1" style="width:88px;" />
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <label class="flex items-center gap-1.5 cursor-pointer" style="min-width:110px;">
+                  <input type="checkbox" id="b2-${i}" ${hasB2 ? 'checked' : ''}
+                         onchange="toggleBreak(${i},2)"
+                         class="w-3.5 h-3.5 accent-amber-400" />
+                  <span class="text-xs text-gray-400">☕ Intervalo</span>
+                </label>
+                <div id="b2-times-${i}" class="flex items-center gap-1 ${hasB2 ? '' : 'opacity-30 pointer-events-none'}">
+                  <input type="time" id="b2s-${i}" value="${b2s}" class="input-field text-xs py-1" style="width:88px;" />
+                  <span class="text-gray-600 text-xs">–</span>
+                  <input type="time" id="b2e-${i}" value="${b2e}" class="input-field text-xs py-1" style="width:88px;" />
+                </div>
+              </div>
             </div>
           </div>`;
       }).join('');
