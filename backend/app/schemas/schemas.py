@@ -53,6 +53,7 @@ class TokenResponse(BaseModel):
     barbershop_name: str
     barbershop_slug: str
     user_name: str
+    is_admin: bool = False
     must_change_password: bool = False
 
 
