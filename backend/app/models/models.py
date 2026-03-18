@@ -44,6 +44,7 @@ class Barbershop(Base):
     logo_url   = Column(String(500), nullable=True)   # URL da logomarca
     plan       = Column(Enum(PlanType), default=PlanType.free)
     is_active  = Column(Boolean, default=True)
+    expires_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=utcnow)
 
     users        = relationship("User", back_populates="barbershop")
