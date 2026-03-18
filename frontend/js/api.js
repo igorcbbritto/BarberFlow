@@ -18,14 +18,14 @@ const Auth = {
         localStorage.setItem('barbershop_name', data.barbershop_name);
         localStorage.setItem('barbershop_slug', data.barbershop_slug);
         localStorage.setItem('user_name', data.user_name);
-        localStorage.setItem('is_admin', data.is_admin ? '1' : '0');
+        localStorage.setItem('must_change_password', data.must_change_password ? '1' : '0');
     },
+    mustChangePassword() { return localStorage.getItem('must_change_password') === '1'; },
     getToken()         { return localStorage.getItem('token'); },
     getBarbershopName(){ return localStorage.getItem('barbershop_name'); },
     getUserName()      { return localStorage.getItem('user_name'); },
     getSlug()          { return localStorage.getItem('barbershop_slug'); },
     isLoggedIn()       { return !!localStorage.getItem('token'); },
-    isAdmin()          { return localStorage.getItem('is_admin') === '1'; },
     logout() {
         localStorage.clear();
         window.location.href = '/index.html';
@@ -103,12 +103,19 @@ const API = {
     createAppointment:(body) => apiRequest('POST', '/appointments/', body),
     updateAppointment:(id,b) => apiRequest('PUT', `/appointments/${id}`, b),
     cancelAppointment:(id)  => apiRequest('DELETE', `/appointments/${id}`),
-    togglePayment:    (id)  => apiRequest('PATCH', `/appointments/${id}/payment`),
     
     // Agenda dos profissionais
     getSchedule:  (barberId)         => apiRequest('GET', `/schedules/${barberId}`),
     saveSchedule: (barberId, body)   => apiRequest('POST', `/schedules/${barberId}`, body),
     getSlots:     (params)           => apiRequest('GET', `/schedules/public/slots?${new URLSearchParams(params)}`, null, false),
+
+    // Senha e Perfil
+    getProfile:      ()       => apiRequest('GET',  '/password/profile'),
+    updateProfile:   (body)   => apiRequest('PUT',  '/password/profile', body),
+    changePassword:  (body)   => apiRequest('POST', '/password/change', body),
+    resetPassword:   (body)   => apiRequest('POST', '/password/reset', body, false),
+    generateCode:    (email)  => apiRequest('POST', `/password/reset-code/${email}`),
+    adminReset:      (body)   => apiRequest('POST', '/password/admin-reset', body),
 
     // Público (sem auth)
     publicInfo: (slug)      => apiRequest('GET', `/appointments/public/${slug}/info`, null, false),
