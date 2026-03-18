@@ -6,7 +6,6 @@ POST /auth/register  → Cria barbearia + usuário admin
 POST /auth/login     → Retorna token JWT
 """
 
-import os
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
@@ -84,6 +83,7 @@ def register(data: RegisterRequest, db: Session = Depends(get_db)):
         barbershop_name=barbershop.name,
         barbershop_slug=barbershop.slug,
         user_name=user.name,
+        must_change_password=False,
     )
 
 
@@ -116,32 +116,15 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
     
     # Busca a barbearia do usuário
     barbershop = db.query(Barbershop).filter(Barbershop.id == user.barbershop_id).first()
-
-    # Verifica se o acesso não está suspenso
-    if not barbershop.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Acesso suspenso. Entre em contato para reativar."
-        )
-
-    # Verifica se o acesso não expirou (None = vitalício, sem bloqueio)
-    from datetime import datetime
-    if barbershop.expires_at and barbershop.expires_at < datetime.now():
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Seu acesso expirou. Entre em contato para renovar."
-        )
-
+    
     # Gera token JWT
     token = create_access_token(data={"sub": str(user.id)})
-
-    admin_email = os.getenv("ADMIN_EMAIL", "igor.c.b.britto@gmail.com")
-
+    
     return TokenResponse(
         access_token=token,
         barbershop_id=barbershop.id,
         barbershop_name=barbershop.name,
         barbershop_slug=barbershop.slug,
         user_name=user.name,
-        is_admin=user.email == admin_email,
+        must_change_password=user.must_change_password or False,
     )
