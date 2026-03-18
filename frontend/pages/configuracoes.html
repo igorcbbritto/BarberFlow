@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BarberFlow — Configurações</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+  <div id="app-layout"></div>
+  <script src="../js/api.js"></script>
+  <script src="../js/layout.js"></script>
+  <script>
+    initLayout('configuracoes');
+
+    async function renderPage() {
+      const content = document.getElementById('page-content');
+      content.innerHTML = `<div class="flex justify-center items-center h-32 text-gray-500">Carregando...</div>`;
+
+      let profile = {};
+      try { profile = await API.getProfile(); } catch(e) {}
+
+      const shop = profile.barbershop || {};
+      const user = profile.user || {};
+
+      content.innerHTML = `
+        <div class="fade-in max-w-2xl">
+          <h1 class="font-display text-4xl tracking-wider gold mb-2">CONFIGURAÇÕES</h1>
+          <p class="text-gray-500 text-sm mb-8">Personalize sua barbearia e gerencie sua conta</p>
+
+          <!-- ── PERFIL DA BARBEARIA ── -->
+          <div class="card p-6 mb-6">
+            <h2 class="text-white font-semibold text-base mb-5 flex items-center gap-2">
+              <span style="color:var(--gold);">🏪</span> Perfil da Barbearia
+            </h2>
+
+            <!-- Preview da logo -->
+            <div class="flex items-center gap-4 mb-5">
+              <div id="logo-preview" class="w-16 h-16 rounded-xl flex items-center justify-center text-2xl flex-shrink-0"
+                   style="background:rgba(201,168,76,0.1); border:2px dashed #333;">
+                ${shop.logo_url
+                  ? `<img src="${shop.logo_url}" class="w-full h-full rounded-xl object-cover" />`
+                  : '🏪'}
+              </div>
+              <div class="flex-1">
+                <p class="text-sm text-white font-medium mb-1">Logo da barbearia</p>
+                <p class="text-xs text-gray-500 mb-2">Aparece na página de agendamento dos clientes</p>
+                <p class="text-xs text-gray-400">Cole a URL de uma imagem (JPG, PNG, WebP)</p>
+              </div>
+            </div>
+
+            <div class="space-y-4">
+              <div>
+                <label class="block text-xs text-gray-400 mb-1.5 uppercase tracking-wide">URL da Logo</label>
+                <input type="url" id="p-logo" value="${shop.logo_url || ''}"
+                       placeholder="https://exemplo.com/logo.png"
+                       oninput="previewLogo(this.value)"
+                       class="input-field" />
+                <p class="text-xs text-gray-600 mt-1">
+                  Dica: use o <a href="https://imgbb.com" target="_blank" class="text-amber-500 hover:underline">ImgBB</a> para hospedar imagens gratuitamente
+                </p>
+              </div>
+              <div>
+                <label class="block text-xs text-gray-400 mb-1.5 uppercase tracking-wide">Nome da Barbearia</label>
+                <input type="text" id="p-name" value="${shop.name || ''}" class="input-field" />
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs text-gray-400 mb-1.5 uppercase tracking-wide">Telefone</label>
+                  <input type="tel" id="p-phone" value="${shop.phone || ''}" placeholder="(11) 99999-9999" class="input-field" />
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-400 mb-1.5 uppercase tracking-wide">Endereço</label>
+                  <input type="text" id="p-address" value="${shop.address || ''}" placeholder="Rua, número - Bairro" class="input-field" />
+                </div>
+              </div>
+              <button onclick="saveProfile()" class="btn-gold px-6 py-2.5 text-sm">
+                Salvar Perfil
+              </button>
+            </div>
+          </div>
+
+          <!-- ── TROCAR SENHA ── -->
+          <div class="card p-6 mb-6">
+            <h2 class="text-white font-semibold text-base mb-5 flex items-center gap-2">
+              <span style="color:var(--gold);">🔒</span> Trocar Senha
+            </h2>
+            <div class="space-y-4">
+              <div>
+                <label class="block text-xs text-gray-400 mb-1.5 uppercase tracking-wide">Senha Atual</label>
+                <input type="password" id="pw-current" placeholder="••••••••" class="input-field" />
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs text-gray-400 mb-1.5 uppercase tracking-wide">Nova Senha</label>
+                  <input type="password" id="pw-new" placeholder="••••••••" class="input-field" />
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-400 mb-1.5 uppercase tracking-wide">Confirmar Senha</label>
+                  <input type="password" id="pw-confirm" placeholder="••••••••" class="input-field" />
+                </div>
+              </div>
+              <button onclick="changePassword()" class="btn-gold px-6 py-2.5 text-sm">
+                Alterar Senha
+              </button>
+            </div>
+          </div>
+
+          <!-- ── RESET DE SENHA (ADMIN) ── -->
+          <div class="card p-6 mb-6">
+            <h2 class="text-white font-semibold text-base mb-2 flex items-center gap-2">
+              <span style="color:var(--gold);">🔑</span> Redefinir Senha de Usuário
+            </h2>
+            <p class="text-gray-500 text-sm mb-4">
+              Define uma nova senha temporária para um usuário que esqueceu a senha.
+              Envie a nova senha para ele pelo WhatsApp — no próximo login ele será obrigado a criar uma nova senha.
+            </p>
+            <div class="space-y-3">
+              <div>
+                <label class="block text-xs text-gray-400 mb-1.5 uppercase tracking-wide">E-mail do Usuário</label>
+                <input type="email" id="reset-email" placeholder="usuario@email.com" class="input-field" />
+              </div>
+              <div>
+                <label class="block text-xs text-gray-400 mb-1.5 uppercase tracking-wide">Nova Senha Temporária</label>
+                <input type="text" id="reset-newpw" placeholder="Ex: barber2024"
+                       class="input-field" />
+                <p class="text-xs text-gray-600 mt-1">Mínimo 6 caracteres — envie esta senha para o usuário pelo WhatsApp</p>
+              </div>
+              <button onclick="adminResetPassword()" class="btn-gold px-5 py-2.5 text-sm">
+                Redefinir Senha
+              </button>
+            </div>
+            <div id="reset-result" class="hidden mt-4 p-4 rounded-xl"
+                 style="background:rgba(52,211,153,0.08); border:1px solid rgba(52,211,153,0.2);">
+              <p class="text-sm text-green-400 font-medium">✅ <span id="reset-msg"></span></p>
+              <p class="text-xs text-gray-500 mt-1">O usuário precisará criar uma nova senha no próximo login.</p>
+            </div>
+          </div>
+
+          <!-- ── LINK DE AGENDAMENTO ── -->
+          <div class="card p-6">
+            <h2 class="text-white font-semibold text-base mb-2 flex items-center gap-2">
+              <span style="color:var(--gold);">🔗</span> Link de Agendamento
+            </h2>
+            <p class="text-gray-500 text-sm mb-3">Compartilhe este link com seus clientes</p>
+            <div class="flex gap-2 items-center">
+              <input type="text" id="booking-link"
+                     value="https://barberflow-app.pages.dev/booking.html?slug=${shop.slug || ''}"
+                     readonly class="input-field text-xs" style="color:#888;" />
+              <button onclick="copyLink()" class="btn-ghost px-4 py-2.5 text-sm whitespace-nowrap">
+                Copiar
+              </button>
+            </div>
+          </div>
+
+        </div>`;
+    }
+
+    function previewLogo(url) {
+      const preview = document.getElementById('logo-preview');
+      if (url && url.startsWith('http')) {
+        preview.innerHTML = `<img src="${url}" class="w-full h-full rounded-xl object-cover"
+          onerror="this.parentElement.innerHTML='❌'" />`;
+      } else {
+        preview.innerHTML = '🏪';
+      }
+    }
+
+    async function saveProfile() {
+      const body = {
+        name:     document.getElementById('p-name').value    || null,
+        logo_url: document.getElementById('p-logo').value    || null,
+        phone:    document.getElementById('p-phone').value   || null,
+        address:  document.getElementById('p-address').value || null,
+      };
+      try {
+        const res = await API.updateProfile(body);
+        // Atualiza nome no localStorage e no sidebar
+        localStorage.setItem('barbershop_name', res.barbershop.name);
+        fillBarbershopInfo();
+        showToast('Perfil salvo com sucesso!');
+      } catch(err) { showToast(err.message, 'error'); }
+    }
+
+    async function changePassword() {
+      const current = document.getElementById('pw-current').value;
+      const newPw   = document.getElementById('pw-new').value;
+      const confirm = document.getElementById('pw-confirm').value;
+
+      if (!current || !newPw) { showToast('Preencha todos os campos', 'error'); return; }
+      if (newPw !== confirm)  { showToast('As senhas não coincidem', 'error'); return; }
+      if (newPw.length < 6)  { showToast('Senha deve ter pelo menos 6 caracteres', 'error'); return; }
+
+      try {
+        await API.changePassword({ current_password: current, new_password: newPw });
+        showToast('Senha alterada com sucesso!');
+        document.getElementById('pw-current').value = '';
+        document.getElementById('pw-new').value     = '';
+        document.getElementById('pw-confirm').value = '';
+      } catch(err) { showToast(err.message, 'error'); }
+    }
+
+    async function adminResetPassword() {
+      const email  = document.getElementById('reset-email').value.trim();
+      const newPw  = document.getElementById('reset-newpw').value.trim();
+      if (!email)  { showToast('Digite o e-mail do usuário', 'error'); return; }
+      if (!newPw)  { showToast('Digite a nova senha temporária', 'error'); return; }
+      if (newPw.length < 6) { showToast('Senha deve ter pelo menos 6 caracteres', 'error'); return; }
+      try {
+        const res = await API.adminReset({ email, new_password: newPw });
+        document.getElementById('reset-msg').textContent = res.message;
+        document.getElementById('reset-result').classList.remove('hidden');
+        document.getElementById('reset-email').value = '';
+        document.getElementById('reset-newpw').value = '';
+        showToast('Senha redefinida! Avise o usuário pelo WhatsApp.');
+      } catch(err) { showToast(err.message, 'error'); }
+    }
+
+    function copyLink() {
+      const link = document.getElementById('booking-link').value;
+      navigator.clipboard.writeText(link).then(() => showToast('Link copiado!'));
+    }
+
+    renderPage();
+  </script>
+</body>
+</html>
