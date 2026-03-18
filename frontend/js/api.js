@@ -18,6 +18,7 @@ const Auth = {
         localStorage.setItem('barbershop_name', data.barbershop_name);
         localStorage.setItem('barbershop_slug', data.barbershop_slug);
         localStorage.setItem('user_name', data.user_name);
+        localStorage.setItem('is_admin', data.is_admin ? '1' : '0');
         localStorage.setItem('must_change_password', data.must_change_password ? '1' : '0');
     },
     mustChangePassword() { return localStorage.getItem('must_change_password') === '1'; },
@@ -26,6 +27,7 @@ const Auth = {
     getUserName()      { return localStorage.getItem('user_name'); },
     getSlug()          { return localStorage.getItem('barbershop_slug'); },
     isLoggedIn()       { return !!localStorage.getItem('token'); },
+    isAdmin()          { return localStorage.getItem('is_admin') === '1'; },
     logout() {
         localStorage.clear();
         window.location.href = '/index.html';
@@ -103,6 +105,7 @@ const API = {
     createAppointment:(body) => apiRequest('POST', '/appointments/', body),
     updateAppointment:(id,b) => apiRequest('PUT', `/appointments/${id}`, b),
     cancelAppointment:(id)  => apiRequest('DELETE', `/appointments/${id}`),
+    togglePayment:    (id)  => apiRequest('PATCH',  `/appointments/${id}/payment`),
     
     // Agenda dos profissionais
     getSchedule:  (barberId)         => apiRequest('GET', `/schedules/${barberId}`),
